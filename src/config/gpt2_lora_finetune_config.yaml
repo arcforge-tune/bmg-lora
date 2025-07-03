@@ -21,7 +21,6 @@ model:
     target_modules: ["c_attn"]
     lora_dropout: 0.1
     bias: none
-    task_type: CAUSAL_LM_INSTRUCTION
   ipex:
     enabled: true
 

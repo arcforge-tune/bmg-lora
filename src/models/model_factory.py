@@ -34,8 +34,7 @@ def create_model(model_config):
             lora_alpha=lora_cfg['lora_alpha'],
             target_modules=lora_cfg['target_modules'],
             lora_dropout=lora_cfg['lora_dropout'],
-            bias=lora_cfg['bias'],
-            task_type=lora_cfg['task_type']
+            bias=lora_cfg['bias']
         )
         model = get_peft_model(model, lora_config)
     return model
