@@ -8,6 +8,8 @@ try:
 except ImportError:
     has_ipex = False
 
+from ipex_llm.transformers.qlora import prepare_model_for_kbit_training
+
 def create_model(model_config):
     """
     Create and return a model based on the specified configuration.
@@ -37,4 +39,7 @@ def create_model(model_config):
             bias=lora_cfg['bias']
         )
         model = get_peft_model(model, lora_config)
+    # Optionally prepare for kbit training
+    if model_config.get('prepare_kbit_training', False):
+        model = prepare_model_for_kbit_training(model)
     return model

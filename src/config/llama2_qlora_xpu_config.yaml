@@ -1,0 +1,55 @@
+# llama2_qlora_xpu_config.yaml
+
+model:
+  model_id: meta-llama/Llama-2-7b-hf
+  tokenizer_id: meta-llama/Llama-2-7b-hf
+  pad_token_as_eos: true
+  trust_remote_code: true
+  torch_dtype: bfloat16
+  load_in_low_bit: nf4
+  optimize_model: false
+  modules_to_not_convert: ["lm_head"]
+  use_cache: false
+  gradient_checkpointing: true
+  lora:
+    enabled: true
+    r: 8
+    lora_alpha: 16
+    lora_dropout: 0.05
+    target_modules:
+      - q_proj
+      - v_proj
+      - k_proj
+      - o_proj
+      - up_proj
+      - down_proj
+      - gate_proj
+    bias: none
+    task_type: CAUSAL_LM
+    training_mode: qlora
+  ipex:
+    enabled: true
+  prepare_kbit_training: true
+
+data:
+  dataset_type: json
+  dataset_name: yahma/alpaca-cleaned
+  split: train[:1000]
+  batch_size: 2
+  max_length: 128
+  num_workers: 2
+
+training:
+  epochs: 5
+  learning_rate: 1e-5
+  weight_decay: 0.01
+  gradient_accumulation_steps: 6
+  save_steps: 100
+  output_dir: outputs/lora_llama2_xpu
+  seed: 42
+  device: xpu
+  clear_xpu_cache: true
+
+environment:
+  ENABLE_ONEDNN_LAYOUT_OPT: "1"
+  ONEDNN_DEFAULT_FPMATH_MODE: "BF16"

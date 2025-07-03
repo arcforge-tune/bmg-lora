@@ -1,5 +1,6 @@
 import torch
 from torch.optim import AdamW
+from tqdm import tqdm
 
 
 class ModelInstructions:
@@ -13,7 +14,11 @@ class GPT2Instructions(ModelInstructions):
 
 
 class Llama2Instructions(ModelInstructions):
-    pass  # Can override batch_to_device if needed
+    def batch_to_device(self, batch, device):
+        input_ids, attention_mask = batch
+        input_ids = input_ids.to(device, non_blocking=True)
+        attention_mask = attention_mask.to(device, non_blocking=True)
+        return {'input_ids': input_ids, 'attention_mask': attention_mask, 'labels': input_ids}
 
 
 class Trainer:
@@ -26,25 +31,43 @@ class Trainer:
         self.tokenizer = tokenizer
         self.device = torch.device("xpu" if configTrain.get('device', 'auto') == 'xpu' and hasattr(torch, 'xpu') and torch.xpu.is_available() else "cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
-        self.optimizer = AdamW(self.model.parameters(), lr=configTrain['learning_rate'])
+        self.optimizer = AdamW(self.model.parameters(), lr=float(configTrain['learning_rate']))
         self.instructions = instructions or ModelInstructions()
 
-    def train(self):
+    def train(self, use_amp=False, grad_accum_steps=1, save_steps=None, save_checkpoint_fn=None, use_tqdm=False):
         epochs = self.configTrain['epochs']
+        global_step = 0
+        total_steps = epochs * (len(self.train_loader) // grad_accum_steps)
         for epoch in range(epochs):
             self.model.train()
-            total_loss = 0
-            for batch in self.train_loader:
+            total_loss = 0.0
+            self.optimizer.zero_grad()
+            loader = self.train_loader
+            progress = tqdm(loader, desc=f"Epoch {epoch+1}/{epochs}") if use_tqdm else loader
+            for step, batch in enumerate(progress):
                 batch = self.instructions.batch_to_device(batch, self.device)
-                self.optimizer.zero_grad()
-                outputs = self.model(**batch)
-                loss = outputs.loss
-                loss.backward()
-                self.optimizer.step()
+                if use_amp:
+                    with torch.xpu.amp.autocast(dtype=torch.bfloat16):
+                        outputs = self.model(**batch)
+                        loss = outputs.loss
+                        scaled_loss = loss / grad_accum_steps
+                    scaled_loss.backward()
+                else:
+                    outputs = self.model(**batch)
+                    loss = outputs.loss
+                    (loss / grad_accum_steps).backward()
                 total_loss += loss.item()
-
-            avg_loss = total_loss / len(self.train_loader)
-            print(f"Epoch {epoch+1} — Train Loss: {avg_loss:.4f}")
+                if (step + 1) % grad_accum_steps == 0:
+                    self.optimizer.step()
+                    self.optimizer.zero_grad()
+                    global_step += 1
+                    if save_steps and save_checkpoint_fn and global_step % save_steps == 0:
+                        save_checkpoint_fn(self.model, self.tokenizer, self.configTrain.get('output_dir', 'outputs/lora_finetuned'), global_step, epoch+1)
+                if use_tqdm:
+                    avg_loss = total_loss / (step + 1)
+                    progress.set_postfix({'loss': f'{avg_loss:.4f}', 'step': f'{global_step}/{total_steps}'})
+            epoch_loss = total_loss / len(loader)
+            print(f"Epoch {epoch+1} completed - Avg Loss: {epoch_loss:.4f}")
             self.validate(epoch)
         if self.configTrain.get('save_model', True):
             self.save_model()
