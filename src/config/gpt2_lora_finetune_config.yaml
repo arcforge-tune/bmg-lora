@@ -1,0 +1,33 @@
+logging:
+  level: INFO
+  log_dir: outputs/logs
+
+data:
+  dataset_type: json
+  dataset_name: yahma/alpaca-cleaned
+  split: train[:1000]
+  batch_size: 4
+  max_length: 128
+  split_ratio: 0.9
+
+model:
+  model_id: gpt2
+  tokenizer_id: gpt2
+  pad_token_as_eos: true
+  lora:
+    enabled: true
+    r: 4
+    lora_alpha: 16
+    target_modules: ["c_attn"]
+    lora_dropout: 0.1
+    bias: none
+    task_type: CAUSAL_LM_INSTRUCTION
+  ipex:
+    enabled: true
+
+training:
+  epochs: 100
+  learning_rate: 0.0005
+  output_dir: outputs/lora_finetuned
+  save_model: true
+  device: xpu  # "xpu" if available, else "cpu"

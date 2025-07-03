@@ -1,0 +1,397 @@
+[
+  {
+    "instruction": "Declare a non-nullable integer variable",
+    "input": "",
+    "output": "val age: Int = 25"
+  },
+  {
+    "instruction": "Convert this Java null-check to Kotlin safe-call operator",
+    "input": "if (user != null) { return user.getName() } else { return null }",
+    "output": "return user?.name"
+  },
+  {
+    "instruction": "Create a data class for a Person with name (String) and age (Int)",
+    "input": "",
+    "output": "data class Person(val name: String, val age: Int)"
+  },
+  {
+    "instruction": "Write a when expression for status codes: 200->\"OK\", 404->\"Not Found\", else->\"Unknown\"",
+    "input": "",
+    "output": "val message = when(statusCode) {\n    200 -> \"OK\"\n    404 -> \"Not Found\"\n    else -> \"Unknown\"\n}"
+  },
+  {
+    "instruction": "Fix this platform type assignment error",
+    "input": "val name: String = JavaClass.getName() // May return null",
+    "output": "val name: String? = JavaClass.getName()"
+  },
+  {
+    "instruction": "Create a list of integers from 1 to 5 and filter even numbers",
+    "input": "",
+    "output": "val numbers = listOf(1, 2, 3, 4, 5)\nval evens = numbers.filter { it % 2 == 0 }"
+  },
+  {
+    "instruction": "Implement a singleton using object declaration",
+    "input": "",
+    "output": "object DatabaseManager {\n    fun connect() { /*...*/ }\n}"
+  },
+  {
+    "instruction": "Write a coroutine that fetches data from a suspending function",
+    "input": "suspend fun fetchData(): Data",
+    "output": "val job = CoroutineScope(Dispatchers.IO).launch {\n    val data = fetchData()\n    withContext(Dispatchers.Main) {\n        updateUI(data)\n    }\n}"
+  },
+  {
+    "instruction": "Handle possible NumberFormatException safely",
+    "input": "\"123a\".toInt()",
+    "output": "val result = try {\n    \"123a\".toInt()\n} catch (e: NumberFormatException) {\n    // Handle error\n    null\n}"
+  },
+  {
+    "instruction": "Create an extension function for String to reverse it",
+    "input": "",
+    "output": "fun String.reverse() = this.reversed()"
+  },
+  {
+    "instruction": "Explain !! operator and safer alternative",
+    "input": "val name: String? = getName()\nprint(name!!.length)",
+    "output": "The !! operator throws NPE if null. Safer: name?.let { print(it.length) } ?: print(\"Name missing\")"
+  },
+  {
+    "instruction": "Write a sealed class for network results",
+    "input": "Success with data, Error with exception",
+    "output": "sealed class Result<out T>\ndata class Success<out T>(val data: T) : Result<T>()\ndata class Error(val exception: Exception) : Result<Nothing>()"
+  },
+  {
+    "instruction": "Create a lazy-initialized heavy object",
+    "input": "",
+    "output": "val heavyObject: HeavyResource by lazy {\n    HeavyResource() // Initialized on first access\n}"
+  },
+  {
+    "instruction": "Fix variable reassignment error",
+    "input": "val count = 0\ncount = 5 // Error",
+    "output": "var count = 0\ncount = 5 // Use 'var' for mutable variables"
+  },
+  {
+    "instruction": "Write a higher-order function that takes lambda (Int) -> String",
+    "input": "",
+    "output": "fun processNumbers(transform: (Int) -> String) {\n    println(transform(42))\n}\n\n// Usage:\nprocessNumbers { \"Value: $it\" }"
+  },
+  {
+    "instruction": "Implement equals() for a class with properties: name and id",
+    "input": "class User(val id: Int, val name: String)",
+    "output": "override fun equals(other: Any?): Boolean {\n    if (this === other) return true\n    if (javaClass != other?.javaClass) return false\n    other as User\n    return id == other.id && name == other.name\n}"
+  },
+  {
+    "instruction": "Create a pair and destructure it",
+    "input": "",
+    "output": "val (name, age) = Pair(\"Alice\", 30)"
+  },
+  {
+    "instruction": "Write a builder DSL for creating HTML tags",
+    "input": "",
+    "output": "class Html {\n    fun body(init: Body.() -> Unit) = Body().apply(init)\n}\n\nclass Body {\n    fun p(text: String) = \"<p>$text</p>\"\n}\n\n// Usage:\nhtml {\n    body {\n        p(\"Hello\")\n    }\n}"
+  },
+  {
+    "instruction": "Prevent Java interop NPE with @NotNull annotation",
+    "input": "Java method: public @NotNull String getName()",
+    "output": "Kotlin will treat return type as String instead of String?"
+  },
+  {
+    "instruction": "Create an inline class for Email validation",
+    "input": "",
+    "output": "@JvmInline\nvalue class Email(val value: String) {\n    init {\n        require(value.contains(\"@\")) { \"Invalid email\" }\n    }\n}"
+  },
+  {
+    "instruction": "Create an immutable list of integers",
+    "input": "",
+    "output": "val numbers = listOf(1, 2, 3, 4, 5)"
+  },
+  {
+    "instruction": "Implement bubble sort for an IntArray",
+    "input": "",
+    "output": "fun bubbleSort(arr: IntArray) {\n    for (i in 0 until arr.size - 1) {\n        for (j in 0 until arr.size - i - 1) {\n            if (arr[j] > arr[j + 1]) {\n                val temp = arr[j]\n                arr[j] = arr[j + 1]\n                arr[j + 1] = temp\n            }\n        }\n    }\n}"
+  },
+  {
+    "instruction": "Create a HashMap to store String-Int pairs",
+    "input": "",
+    "output": "val map = hashMapOf(\"Apple\" to 10, \"Banana\" to 5, \"Orange\" to 8)"
+  },
+  {
+    "instruction": "Implement binary search on a sorted list",
+    "input": "",
+    "output": "fun binarySearch(list: List<Int>, target: Int): Int {\n    var low = 0\n    var high = list.size - 1\n    while (low <= high) {\n        val mid = (low + high) / 2\n        when {\n            list[mid] < target -> low = mid + 1\n            list[mid] > target -> high = mid - 1\n            else -> return mid\n        }\n    }\n    return -1\n}"
+  },
+  {
+    "instruction": "Find common elements in two lists",
+    "input": "val list1 = listOf(1,2,3)\nval list2 = listOf(2,3,4)",
+    "output": "val common = list1.intersect(list2) // Returns [2, 3]"
+  },
+  {
+    "instruction": "Implement a stack using LinkedList",
+    "input": "",
+    "output": "class Stack<T> {\n    private val elements = LinkedList<T>()\n    fun push(item: T) = elements.addFirst(item)\n    fun pop() = elements.removeFirst()\n    fun peek() = elements.firstOrNull()\n    val isEmpty get() = elements.isEmpty()\n}"
+  },
+  {
+    "instruction": "Group strings by their length",
+    "input": "val words = listOf(\"a\", \"bb\", \"cc\", \"ddd\")",
+    "output": "val groups = words.groupBy { it.length } // {1=[\"a\"], 2=[\"bb\",\"cc\"], 3=[\"ddd\"]}"
+  },
+  {
+    "instruction": "Implement depth-first search (DFS) for a graph",
+    "input": "Adjacency list: Map<Int, List<Int>>",
+    "output": "fun dfs(graph: Map<Int, List<Int>>, start: Int): List<Int> {\n    val visited = mutableSetOf<Int>()\n    val stack = ArrayDeque<Int>().apply { push(start) }\n    val result = mutableListOf<Int>()\n    while (stack.isNotEmpty()) {\n        val vertex = stack.pop()\n        if (vertex !in visited) {\n            visited.add(vertex)\n            result.add(vertex)\n            graph[vertex]?.forEach { neighbor ->\n                stack.push(neighbor)\n            }\n        }\n    }\n    return result\n}"
+  },
+  {
+    "instruction": "Find distinct elements in a list with duplicates",
+    "input": "val list = listOf(1,2,2,3,4,4,5)",
+    "output": "val distinct = list.distinct() // [1,2,3,4,5]"
+  },
+  {
+    "instruction": "Create a priority queue (min-heap)",
+    "input": "",
+    "output": "val minHeap = PriorityQueue<Int>()\nminHeap.addAll(listOf(5, 3, 8, 1))\nminHeap.poll() // Returns 1"
+  },
+  {
+    "instruction": "Implement quick sort recursively",
+    "input": "",
+    "output": "fun quickSort(arr: List<Int>): List<Int> = \n    if (arr.size <= 1) arr\n    else {\n        val pivot = arr.first()\n        val (smaller, larger) = arr.drop(1).partition { it <= pivot }\n        quickSort(smaller) + pivot + quickSort(larger)\n    }"
+  },
+  {
+    "instruction": "Convert a list to a frequency map",
+    "input": "val items = listOf(\"apple\", \"banana\", \"apple\", \"orange\")",
+    "output": "val freqMap = items.groupingBy { it }.eachCount() // {apple=2, banana=1, orange=1}"
+  },
+  {
+    "instruction": "Reverse a linked list",
+    "input": "class Node(var value: Int, var next: Node? = null)",
+    "output": "fun reverseList(head: Node?): Node? {\n    var prev: Node? = null\n    var current = head\n    while (current != null) {\n        val next = current.next\n        current.next = prev\n        prev = current\n        current = next\n    }\n    return prev\n}"
+  },
+  {
+    "instruction": "Find max element in a collection",
+    "input": "val nums = listOf(3, 1, 7, 4)",
+    "output": "val max = nums.maxOrNull() // 7"
+  },
+  {
+    "instruction": "Check if two strings are anagrams",
+    "input": "val str1 = \"listen\", str2 = \"silent\"",
+    "output": "fun areAnagrams(s1: String, s2: String): Boolean =\n    s1.length == s2.length && \n    s1.toCharArray().sorted() == s2.toCharArray().sorted()"
+  },
+  {
+    "instruction": "Create a thread-safe mutable list",
+    "input": "",
+    "output": "val safeList = Collections.synchronizedList(mutableListOf<String>())"
+  },
+  {
+    "instruction": "Implement Dijkstra's algorithm (simplified)",
+    "input": "Graph: Map<Int, Map<Int, Int>> (node to neighbors with weights)",
+    "output": "fun dijkstra(graph: Map<Int, Map<Int, Int>>, start: Int): Map<Int, Int> {\n    val distances = mutableMapOf<Int, Int>().withDefault { Int.MAX_VALUE }\n    val queue = PriorityQueue<Pair<Int, Int>>(compareBy { it.second }).apply { add(start to 0) }\n    distances[start] = 0\n    while (queue.isNotEmpty()) {\n        val (node, dist) = queue.poll()\n        graph[node]?.forEach { (neighbor, weight) ->\n            val newDist = dist + weight\n            if (newDist < distances.getValue(neighbor)) {\n                distances[neighbor] = newDist\n                queue.add(neighbor to newDist)\n            }\n        }\n    }\n    return distances\n}"
+  },
+  {
+    "instruction": "Merge two sorted lists",
+    "input": "val listA = listOf(1,3,5), listB = listOf(2,4,6)",
+    "output": "fun mergeSorted(a: List<Int>, b: List<Int>): List<Int> {\n    val result = mutableListOf<Int>()\n    var i = 0\n    var j = 0\n    while (i < a.size && j < b.size) {\n        if (a[i] < b[j]) result.add(a[i++])\n        else result.add(b[j++])\n    }\n    return result + a.drop(i) + b.drop(j)\n}"
+  },
+  {
+    "instruction": "Find all permutations of a string",
+    "input": "",
+    "output": "fun permute(str: String): List<String> =\n    if (str.length <= 1) listOf(str)\n    else str.flatMapIndexed { i, c ->\n        permute(str.removeRange(i, i+1)).map { c + it }\n    }"
+  },
+  {
+    "instruction": "Create a custom comparator for sorting Persons by age",
+    "input": "data class Person(val name: String, val age: Int)",
+    "output": "val people = listOf(Person(\"Alice\", 30), Person(\"Bob\", 25))\nval sorted = people.sortedWith(compareBy { it.age })"
+  },
+  {
+    "instruction": "Create a basic Activity with setContentView",
+    "input": "Layout file: activity_main.xml",
+    "output": "class MainActivity : AppCompatActivity() {\n    override fun onCreate(savedInstanceState: Bundle?) {\n        super.onCreate(savedInstanceState)\n        setContentView(R.layout.activity_main)\n    }\n}"
+  },
+  {
+    "instruction": "Implement ViewBinding in an Activity",
+    "input": "",
+    "output": "class MainActivity : AppCompatActivity() {\n    private lateinit var binding: ActivityMainBinding\n\n    override fun onCreate(savedInstanceState: Bundle?) {\n        super.onCreate(savedInstanceState)\n        binding = ActivityMainBinding.inflate(layoutInflater)\n        setContentView(binding.root)\n        \n        binding.button.setOnClickListener { /* Handle click */ }\n    }\n}"
+  },
+  {
+    "instruction": "Create a ViewModel with LiveData counter",
+    "input": "",
+    "output": "class CounterViewModel : ViewModel() {\n    private val _count = MutableLiveData(0)\n    val count: LiveData<Int> = _count\n\n    fun increment() {\n        _count.value = (_count.value ?: 0) + 1\n    }\n}"
+  },
+  {
+    "instruction": "Observe LiveData in an Activity",
+    "input": "ViewModel: CounterViewModel",
+    "output": "class MainActivity : AppCompatActivity() {\n    private lateinit var viewModel: CounterViewModel\n\n    override fun onCreate(savedInstanceState: Bundle?) {\n        super.onCreate(savedInstanceState)\n        viewModel = ViewModelProvider(this)[CounterViewModel::class.java]\n        \n        viewModel.count.observe(this) { count ->\n            binding.counterText.text = count.toString()\n        }\n    }\n}"
+  },
+  {
+    "instruction": "Navigate to another Activity with explicit intent",
+    "input": "Target Activity: DetailActivity",
+    "output": "val intent = Intent(this, DetailActivity::class.java)\nintent.putExtra(\"item_id\", 123)\nstartActivity(intent)"
+  },
+  {
+    "instruction": "Handle configuration changes with ViewModel",
+    "input": "Rotating device should preserve data",
+    "output": "// ViewModel automatically survives configuration changes\nclass UserViewModel : ViewModel() {\n    val userData = MutableLiveData<User>()\n}\n\n// In Activity:\nviewModel.userData.observe(this) { user ->\n    // Update UI\n}"
+  },
+  {
+    "instruction": "Create a RecyclerView Adapter with DiffUtil",
+    "input": "Data class: Item(val id: Int, val name: String)",
+    "output": "class ItemAdapter : ListAdapter<Item, ItemAdapter.ViewHolder>(DiffCallback()) {\n\n    class ViewHolder(binding: ItemRowBinding) : RecyclerView.ViewHolder(binding.root) {\n        fun bind(item: Item) {\n            binding.name.text = item.name\n        }\n    }\n\n    class DiffCallback : DiffUtil.ItemCallback<Item>() {\n        override fun areItemsTheSame(old: Item, new: Item) = old.id == new.id\n        override fun areContentsTheSame(old: Item, new: Item) = old == new\n    }\n\n    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {\n        val binding = ItemRowBinding.inflate(LayoutInflater.from(parent.context), parent, false)\n        return ViewHolder(binding)\n    }\n\n    override fun onBindViewHolder(holder: ViewHolder, position: Int) {\n        holder.bind(getItem(position))\n    }\n}"
+  },
+  {
+    "instruction": "Implement data loading with coroutines in ViewModel",
+    "input": "Suspend function: fetchData(): List<Data>",
+    "output": "class DataViewModel : ViewModel() {\n    private val _data = MutableLiveData<List<Data>>()\n    val data: LiveData<List<Data>> = _data\n    \n    init {\n        viewModelScope.launch {\n            try {\n                _data.value = repository.fetchData()\n            } catch (e: Exception) {\n                // Handle error\n            }\n        }\n    }\n}"
+  },
+  {
+    "instruction": "Save Activity state with onSaveInstanceState",
+    "input": "Preserve scroll position: Int",
+    "output": "override fun onSaveInstanceState(outState: Bundle) {\n    super.onSaveInstanceState(outState)\n    outState.putInt(\"SCROLL_POSITION\", binding.recyclerView.computeVerticalScrollOffset())\n}\n\noverride fun onCreate(savedInstanceState: Bundle?) {\n    super.onCreate(savedInstanceState)\n    if (savedInstanceState != null) {\n        val position = savedInstanceState.getInt(\"SCROLL_POSITION\")\n        binding.recyclerView.scrollBy(0, position)\n    }\n}"
+  },
+  {
+    "instruction": "Create a fragment transaction",
+    "input": "Replace container with DetailFragment",
+    "output": "supportFragmentManager.beginTransaction()\n    .replace(R.id.fragment_container, DetailFragment())\n    .addToBackStack(\"detail\")\n    .commit()"
+  },
+  {
+    "instruction": "Share data between fragments using ViewModel",
+    "input": "Both fragments in same Activity",
+    "output": "class SharedViewModel : ViewModel() {\n    val selectedItem = MutableLiveData<Item>()\n}\n\n// In Fragment A:\nactivity?.let {\n    ViewModelProvider(it)[SharedViewModel::class.java].selectedItem.value = item\n}\n\n// In Fragment B:\nactivity?.let {\n    ViewModelProvider(it)[SharedViewModel::class.java].selectedItem.observe(viewLifecycleOwner) { item ->\n        // Update UI\n    }\n}"
+  },
+  {
+    "instruction": "Handle permission request in Activity",
+    "input": "Request ACCESS_FINE_LOCATION",
+    "output": "private val LOCATION_PERMISSION_CODE = 1001\n\nfun requestLocationPermission() {\n    if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) \n        != PackageManager.PERMISSION_GRANTED) {\n        ActivityCompat.requestPermissions(\n            this,\n            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),\n            LOCATION_PERMISSION_CODE\n        )\n    } else {\n        // Permission already granted\n    }\n}\n\noverride fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {\n    super.onRequestPermissionsResult(requestCode, permissions, grantResults)\n    if (requestCode == LOCATION_PERMISSION_CODE) {\n        if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {\n            // Permission granted\n        } else {\n            // Permission denied\n        }\n    }\n}"
+  },
+  {
+    "instruction": "Create a menu in Activity toolbar",
+    "input": "Menu file: main_menu.xml",
+    "output": "override fun onCreateOptionsMenu(menu: Menu): Boolean {\n    menuInflater.inflate(R.menu.main_menu, menu)\n    return true\n}\n\noverride fun onOptionsItemSelected(item: MenuItem): Boolean {\n    return when (item.itemId) {\n        R.id.action_settings -> {\n            // Handle settings\n            true\n        }\n        else -> super.onOptionsItemSelected(item)\n    }\n}"
+  },
+  {
+    "instruction": "Implement two-way data binding with EditText",
+    "input": "ViewModel property: userName: MutableLiveData<String>",
+    "output": "<!-- layout.xml -->\n<EditText\n    android:text=\"@={viewModel.userName}\" />\n\n// ViewModel:\nval userName = MutableLiveData(\"\")\n\n// Activity:\nbinding.lifecycleOwner = this\nbinding.viewModel = viewModel"
+  },
+  {
+    "instruction": "Create a Service and start from Activity",
+    "input": "Service: DownloadService",
+    "output": "// In Activity:\nval intent = Intent(this, DownloadService::class.java)\nintent.putExtra(\"url\", \"https://example.com/file\")\nstartService(intent)\n\n// Service:\nclass DownloadService : Service() {\n    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {\n        val url = intent?.getStringExtra(\"url\")\n        // Start download\n        return START_STICKY\n    }\n}"
+  },
+  {
+    "instruction": "Fix 'Unable to add window -- token null' error",
+    "input": "Showing dialog in background thread",
+    "output": "runOnUiThread {\n    AlertDialog.Builder(this)\n        .setTitle(\"Title\")\n        .show()\n}\n\n// Or using coroutines:\nwithContext(Dispatchers.Main) {\n    // Show dialog\n}"
+  },
+  {
+    "instruction": "Prevent memory leaks in Activity with weak references",
+    "input": "Long-running task holding Activity reference",
+    "output": "class MyAsyncTask(context: Context) {\n    private val weakContext = WeakReference(context)\n\n    fun execute() {\n        // Do background work\n        weakContext.get()?.let { \n            // Update UI if activity still exists\n        }\n    }\n}"
+  },
+  {
+    "instruction": "Implement Parcelable for Activity arguments",
+    "input": "Data class: User(val id: Int, val name: String)",
+    "output": "@Parcelize\ndata class User(val id: Int, val name: String) : Parcelable\n\n// Pass to activity:\nval intent = Intent(this, DetailActivity::class.java)\nintent.putExtra(\"user\", user)\n\n// Retrieve:\nval user = intent.getParcelableExtra<User>(\"user\")"
+  },
+  {
+    "instruction": "Use WorkManager for periodic background task",
+    "input": "Sync data every 12 hours",
+    "output": "class SyncWorker(appContext: Context, workerParams: WorkerParameters) : Worker(appContext, workerParams) {\n    override fun doWork(): Result {\n        // Sync data\n        return Result.success()\n    }\n}\n\n// Schedule:\nval constraints = Constraints.Builder()\n    .setRequiredNetworkType(NetworkType.CONNECTED)\n    .build()\n\nval syncRequest = PeriodicWorkRequestBuilder<SyncWorker>(12, TimeUnit.HOURS)\n    .setConstraints(constraints)\n    .build()\n\nWorkManager.getInstance(context).enqueueUniquePeriodicWork(\n    \"syncWork\",\n    ExistingPeriodicWorkPolicy.KEEP,\n    syncRequest\n)"
+  },
+  {
+    "instruction": "Create a custom view with attributes",
+    "input": "CustomProgressBar with color attributes",
+    "output": "class CustomProgressBar @JvmOverloads constructor(\n    context: Context,\n    attrs: AttributeSet? = null,\n    defStyleAttr: Int = 0\n) : View(context, attrs, defStyleAttr) {\n\n    var progressColor = Color.BLUE\n        set(value) {\n            field = value\n            invalidate()\n        }\n\n    init {\n        context.theme.obtainStyledAttributes(\n            attrs,\n            R.styleable.CustomProgressBar,\n            0, 0\n        ).apply {\n            try {\n                progressColor = getColor(R.styleable.CustomProgressBar_progressColor, Color.BLUE)\n            } finally {\n                recycle()\n            }\n        }\n    }\n\n    override fun onDraw(canvas: Canvas) {\n        // Draw with progressColor\n    }\n}\n\n<!-- attrs.xml -->\n<declare-styleable name=\"CustomProgressBar\">\n    <attr name=\"progressColor\" format=\"color\" />\n</declare-styleable>"
+  },
+  {
+    "instruction": "Design an Android Room Entity for a Pictogram object used in an AAC (Augmentative and Alternative Communication) app.",
+    "input": "Create an entity to store pictogram details like id, name, image URL, and audio path.",
+    "output": "@Entity\ndata class PictogramEntity(\n    @PrimaryKey val pictogramId: Long,\n    val name: String,\n    val imageUrl: String,\n    val audioUrl: String\n)"
+  },
+  {
+    "instruction": "Implement a many-to-many relationship between pictograms and categories using Room in Android.",
+    "input": "Pictogram can belong to multiple categories, and categories can include multiple pictograms.",
+    "output": "@Entity\ndata class CategoryEntity(\n    @PrimaryKey val categoryId: Long,\n    val name: String\n)\n\n@Entity(primaryKeys = [\"pictogramId\", \"categoryId\"])\ndata class PictogramCategoryCrossRef(\n    val pictogramId: Long,\n    val categoryId: Long\n)"
+  },
+  {
+    "instruction": "Explain how to use Room with Kotlin and provide a basic DAO for pictograms.",
+    "input": "Create DAO methods for inserting and querying pictograms.",
+    "output": "@Dao\ninterface PictogramDao {\n    @Insert(onConflict = OnConflictStrategy.REPLACE)\n    suspend fun insertAll(pictograms: List<PictogramEntity>)\n\n    @Query(\"SELECT * FROM PictogramEntity\")\n    suspend fun getAll(): List<PictogramEntity>\n}"
+  },
+  {
+    "instruction": "Fetch and activate Firebase Remote Config with exponential backoff.",
+    "input": "Handle retries for Remote Config failures.",
+    "output": "fun fetchRemoteConfigWithRetry(retries: Int = 3, delayMillis: Long = 2000L) {\n    Firebase.remoteConfig.fetchAndActivate().addOnCompleteListener {\n        if (!it.isSuccessful && retries > 0) {\n            Handler(Looper.getMainLooper()).postDelayed({\n                fetchRemoteConfigWithRetry(retries - 1, delayMillis * 2)\n            }, delayMillis)\n        }\n    }\n}"
+  },
+  {
+    "instruction": "Track Firebase Analytics events for pictogram usage.",
+    "input": "Log when a user plays a pictogram.",
+    "output": "val bundle = Bundle().apply {\n    putString(\"pictogram_id\", pictogramId.toString())\n    putString(\"action\", \"play\")\n}\nFirebase.analytics.logEvent(\"pictogram_interaction\", bundle)"
+  },
+  {
+    "instruction": "Define a Room Entity and its relationship using a cross-reference table",
+    "input": "Create entities for 'Pictogram' and 'Category' where a pictogram can belong to multiple categories and vice versa.",
+    "output": "@Entity data class Pictogram(@PrimaryKey val id: Long, val name: String, val imageUrl: String)\n\n@Entity data class Category(@PrimaryKey val id: Long, val name: String)\n\n@Entity(primaryKeys = [\"pictogramId\", \"categoryId\"])\ndata class PictogramCategoryCrossRef(val pictogramId: Long, val categoryId: Long)"
+  },
+  {
+    "instruction": "Explain the use of Firebase Remote Config in an Android app",
+    "input": "Why use Firebase Remote Config?",
+    "output": "Firebase Remote Config allows developers to change the behavior and appearance of the app without requiring users to download an app update. It's commonly used for A/B testing, feature toggles, and dynamic configuration."
+  },
+  {
+    "instruction": "Handle Firebase Remote Config network failures gracefully",
+    "input": "Best practice for fetchAndActivate() failure?",
+    "output": "Use exponential backoff with a limited retry count. Always show default values and log the failure for analytics. Optionally, allow users to retry manually."
+  },
+  {
+    "instruction": "Explain a common Kotlin mistake",
+    "input": "Why does 'Unresolved reference: kapt' appear?",
+    "output": "This error happens when the 'kotlin-kapt' plugin is not applied in the module's build.gradle.kts file. Add 'apply plugin: \"kotlin-kapt\"' or in plugins block: 'id(\"kotlin-kapt\")'."
+  },
+  {
+    "instruction": "Describe how to map a Room entity to a domain model",
+    "input": "Automatically convert Room entity to domain model",
+    "output": "Use Kotlin extension functions or third-party libraries like MapStruct or Kotlin Symbol Processing (KSP) to generate boilerplate mapping code. Example:\nfun PictogramEntity.toDomainModel(): Pictogram = Pictogram(id, name, imageUrl)"
+  },
+  {
+    "instruction": "Summarize licensing options for Android apps",
+    "input": "What's a good license if I want to protect my code from commercial use?",
+    "output": "You can use a custom open-source license inspired by the Facebook license that allows open use but restricts commercial redistribution or resale. Alternatively, use AGPL or custom clause-based licenses."
+  },
+  {
+    "instruction": "Explain Firebase Analytics usage for AAC app",
+    "input": "How can Firebase Analytics help in AAC?",
+    "output": "Firebase Analytics can track usage of pictograms, sentence building patterns, user engagement, and feature usage. Events like 'pictogram_selected' or 'sentence_played' help measure app effectiveness and guide updates."
+  },
+  {
+    "instruction": "Describe a best practice for structuring Firebase Remote Config keys",
+    "input": "How should keys be organized in Firebase Remote Config?",
+    "output": "Use a consistent, hierarchical naming pattern such as 'feature_name.property'. For example: 'pictogram.max_items', 'home_screen.show_tutorial', or 'analytics.track_sentence_play'. This improves clarity and manageability."
+  },
+  {
+    "instruction": "Explain a common error when using version catalogs",
+    "input": "Error: In version catalog libs, you can only call the 'from' method a single time",
+    "output": "This error occurs when you call the 'from' method multiple times in the versionCatalogs block. Fix it by ensuring 'from(files(...))' is called only once per catalog definition."
+  },
+  {
+    "instruction": "Demonstrate full data flow in a clean architecture Android app",
+    "input": "How do you use a PictogramDao to fetch pictograms and display them in an Activity?",
+    "output": "1. Define a Room entity (PictogramEntity), DAO, and domain model (Pictogram).\n2. In repository, map from entity to domain.\n3. ViewModel exposes LiveData or StateFlow of List<Pictogram>.\n4. Activity or Fragment observes and displays the data in UI.\nUse DI (Hilt) to inject dependencies."
+  },
+  {
+    "instruction": "Explain what HiltViewModelBuilder error means",
+    "input": "Error: 'HiltViewModelBuilder.javaClass.application as MyApp' fails",
+    "output": "This expression is incorrect. You can’t get the application context like that. Instead, inject Application using @Provides fun provideApp(@ApplicationContext context: Context): Application or access it from AndroidViewModel."
+  },
+  {
+    "instruction": "Summarize common Kotlin language issues for Android devs",
+    "input": "List common problems and their solutions",
+    "output": "1. lateinit property not initialized → Ensure it's set before use or use nullable type.\n2. Unresolved reference: kapt → Add 'kotlin-kapt' plugin.\n3. Cannot access 'X': it is internal in 'module' → Check visibility modifiers.\n4. Interface with default implementation not compiling → Use 'default' keyword for compatibility.\n5. Conflicting versions in version catalogs → Unify all dependency versions."
+  },
+  {
+    "instruction": "Create a Room DAO method for many-to-many",
+    "input": "How to retrieve all categories for a pictogram?",
+    "output": "@Transaction\n@Query(\"SELECT * FROM pictogram WHERE id = :pictogramId\")\nfun getPictogramWithCategories(pictogramId: Long): Flow<PictogramWithCategories>"
+  },
+  {
+    "instruction": "Describe how to persist pictograms in Room DB",
+    "input": "What entities and DAOs do I need?",
+    "output": "Entities: Pictogram, Category, PictogramCategoryCrossRef. DAOs: insertPictogram, insertCategory, insertCrossRef, getAllPictograms(), getPictogramWithCategories()."
+  }
+]
