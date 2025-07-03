@@ -2,8 +2,22 @@ import torch
 from torch.optim import AdamW
 
 
+class ModelInstructions:
+    def batch_to_device(self, batch, device):
+        # Default: move all tensors in dict to device
+        return {k: v.to(device) for k, v in batch.items()}
+
+
+class GPT2Instructions(ModelInstructions):
+    pass  # Can override batch_to_device if needed
+
+
+class Llama2Instructions(ModelInstructions):
+    pass  # Can override batch_to_device if needed
+
+
 class Trainer:
-    def __init__(self, model, train_loader, val_loader, configTrain, configLora, tokenizer=None):
+    def __init__(self, model, train_loader, val_loader, configTrain, configLora, tokenizer=None, instructions=None):
         self.model = model
         self.train_loader = train_loader
         self.val_loader = val_loader
@@ -13,6 +27,7 @@ class Trainer:
         self.device = torch.device("xpu" if configTrain.get('device', 'auto') == 'xpu' and hasattr(torch, 'xpu') and torch.xpu.is_available() else "cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
         self.optimizer = AdamW(self.model.parameters(), lr=configTrain['learning_rate'])
+        self.instructions = instructions or ModelInstructions()
 
     def train(self):
         epochs = self.configTrain['epochs']
@@ -20,7 +35,7 @@ class Trainer:
             self.model.train()
             total_loss = 0
             for batch in self.train_loader:
-                batch = {k: v.to(self.device) for k, v in batch.items()}
+                batch = self.instructions.batch_to_device(batch, self.device)
                 self.optimizer.zero_grad()
                 outputs = self.model(**batch)
                 loss = outputs.loss
