@@ -69,6 +69,8 @@ class Trainer:
             epoch_loss = total_loss / len(loader)
             print(f"Epoch {epoch+1} completed - Avg Loss: {epoch_loss:.4f}")
             self.validate(epoch)
+            # Clear XPU cache after each epoch
+            torch.xpu.empty_cache()
         if self.configTrain.get('save_model', True):
             self.save_model()
 

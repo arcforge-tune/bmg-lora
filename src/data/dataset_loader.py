@@ -16,7 +16,7 @@ def preprocess_gpt2_instruction_lm(example, tokenizer, max_length):
         "labels": label_enc["input_ids"]
     }
 
-def preprocess_llama2_instruction_lm(example, tokenizer, max_length):
+def preprocess_llama2_hf(example, tokenizer, max_length):
     if "instruction" not in example or "input" not in example or "output" not in example:
         raise ValueError(f"Missing required field in example: {example}")
     prompt = f"### Instruction:\n{example['instruction']}\n\n### Input:\n{example['input']}\n\n### Response:\n{example['output']}"
@@ -41,14 +41,14 @@ def load_dataset(data_config, model_config):
             data_files=data_config['data_files']
         )["train"]
     global tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(model_config['tokenizer_id'])
+    tokenizer = AutoTokenizer.from_pretrained(model_config['tokenizer_id'], trust_remote_code=True, model_max_length=data_config['max_length'])
     if model_config.get('pad_token_as_eos', False):
         tokenizer.pad_token = tokenizer.eos_token
     model_id = model_config.get('model_id', '').lower()
     if model_id == 'gpt2':
         preprocess_fn = lambda ex: preprocess_gpt2_instruction_lm(ex, tokenizer, data_config['max_length'])
     elif model_id == 'meta-llama/llama-2-7b-hf':
-        preprocess_fn = lambda ex: preprocess_llama2_instruction_lm(ex, tokenizer, data_config['max_length'])
+        preprocess_fn = lambda ex: preprocess_llama2_hf(ex, tokenizer, data_config['max_length'])
     elif 'custom_preprocess_fn' in data_config and callable(data_config['custom_preprocess_fn']):
         preprocess_fn = data_config['custom_preprocess_fn']
     else:
@@ -59,7 +59,7 @@ def load_dataset(data_config, model_config):
     # Split (only if not using a split from hub)
     num_workers = data_config.get('num_workers', 0)
     if 'dataset_name' in data_config and 'split_ratio' not in data_config:
-        train_loader = DataLoader(dataset, batch_size=data_config['batch_size'], shuffle=True, num_workers=num_workers)
+        train_loader = DataLoader(tokenized, batch_size=data_config['batch_size'], shuffle=True, num_workers=num_workers)
         val_loader = None
     else:
         split_ratio = data_config['split_ratio']

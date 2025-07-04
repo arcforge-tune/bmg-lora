@@ -4,12 +4,13 @@ model:
   model_id: meta-llama/Llama-2-7b-hf
   tokenizer_id: meta-llama/Llama-2-7b-hf
   pad_token_as_eos: true
-  trust_remote_code: true
-  torch_dtype: bfloat16
-  load_in_low_bit: nf4
-  optimize_model: false
-  modules_to_not_convert: ["lm_head"]
-  use_cache: false
+  from_pretrained_params:
+    load_in_low_bit: nf4
+    optimize_model: false
+    torch_dtype: bfloat16
+    trust_remote_code: true
+    modules_to_not_convert: ["lm_head"]
+    use_cache: false
   gradient_checkpointing: true
   lora:
     enabled: true
@@ -36,7 +37,7 @@ data:
   dataset_name: yahma/alpaca-cleaned
   split: train[:1000]
   batch_size: 2
-  max_length: 128
+  max_length: 256
   num_workers: 2
 
 training:

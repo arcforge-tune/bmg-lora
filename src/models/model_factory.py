@@ -1,6 +1,7 @@
-from transformers import AutoModelForCausalLM
+# from transformers import AutoModelForCausalLM
 from peft import get_peft_model, LoraConfig
 import torch
+from ipex_llm.transformers import AutoModelForCausalLM
 
 try:
     import intel_extension_for_pytorch as ipex
@@ -22,8 +23,18 @@ def create_model(model_config):
     """
     model_id = model_config['model_id']
     device = torch.device("xpu" if model_config.get('ipex', {}).get('enabled', False) and torch.xpu.is_available() else "cpu")
-    # Load base model
-    model = AutoModelForCausalLM.from_pretrained(model_id).to(device)
+
+    # Get from_pretrained_params as a dict from config
+    pretrained_kwargs = model_config.get("from_pretrained_params", {})
+
+    # Convert torch_dtype string to actual torch dtype if present
+    if "torch_dtype" in pretrained_kwargs and isinstance(pretrained_kwargs["torch_dtype"], str):
+        pretrained_kwargs["torch_dtype"] = getattr(torch, pretrained_kwargs["torch_dtype"])
+
+    model = AutoModelForCausalLM.from_pretrained(
+        model_id,
+        **pretrained_kwargs
+    ).to(device)
     # Apply IPEX optimization if enabled
     if model_config.get('ipex', {}).get('enabled', False) and has_ipex:
         model = ipex.optimize(model.eval())

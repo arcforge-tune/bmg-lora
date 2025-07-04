@@ -4,7 +4,7 @@ from data.dataset_loader import load_dataset
 from models.model_factory import create_model
 from training.trainer import Trainer
 from utils.logger import setup_logger
-from training.trainer import Llama2Instructions
+
 def main():
     # Load configuration
     config_path = os.path.join(os.path.dirname(__file__), 'config', 'gpt2_lora_finetune_config.yaml')
