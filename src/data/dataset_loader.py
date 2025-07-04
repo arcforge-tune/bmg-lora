@@ -28,6 +28,27 @@ def preprocess_llama2_hf(example, tokenizer, max_length):
         "labels": input_enc["input_ids"]
     }
 
+def preprocess_llama2_chat_hf(example, tokenizer, max_length):
+    if "instruction" not in example or "output" not in example:
+        raise ValueError(f"Missing required fields in example: {example}")
+    instruction = example.get("instruction", "")
+    input_context = example.get("input", "")
+    assistant = example.get("output", "")
+    sys_prompt = example.get("system", "") or "You are a helpful assistant."
+    # Combine instruction and input if input is present
+    if input_context:
+        user_message = f"{instruction}\n{input_context}"
+    else:
+        user_message = instruction
+
+    prompt = f"<s>[INST] <<SYS>>\n{sys_prompt}\n<</SYS>>\n\n{user_message} [/INST] {assistant}</s>"
+    input_enc = tokenizer(prompt, padding="max_length", truncation=True, max_length=max_length)
+    return {
+        "input_ids": input_enc["input_ids"],
+        "attention_mask": input_enc["attention_mask"],
+        "labels": input_enc["input_ids"]
+    }
+
 #create a method load_dataset that receive config and call load_dataset(data_config, model_config)
 def load_dataset(config):
     return load_dataset_config(config['data'],config['model'])
@@ -53,6 +74,8 @@ def load_dataset_config(data_config, model_config):
         preprocess_fn = lambda ex: preprocess_gpt2_instruction_lm(ex, tokenizer, data_config['max_length'])
     elif model_id == 'meta-llama/llama-2-7b-hf':
         preprocess_fn = lambda ex: preprocess_llama2_hf(ex, tokenizer, data_config['max_length'])
+    elif model_id == 'meta-llama/llama-2-7b-chat-hf':
+        preprocess_fn = lambda ex: preprocess_llama2_chat_hf(ex, tokenizer, data_config['max_length'])
     elif 'custom_preprocess_fn' in data_config and callable(data_config['custom_preprocess_fn']):
         preprocess_fn = data_config['custom_preprocess_fn']
     else:

@@ -46,7 +46,7 @@ training:
   weight_decay: 0.01
   gradient_accumulation_steps: 6
   save_steps: 100
-  output_dir: outputs/lora_llama2_xpu
+  output_dir: outputs/lora_llama2_7b-hf_xpu
   seed: 42
   device: xpu
   clear_xpu_cache: true
