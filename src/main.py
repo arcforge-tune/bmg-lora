@@ -1,3 +1,4 @@
+import argparse
 import os
 import yaml
 from data.dataset_loader import load_dataset
@@ -9,9 +10,20 @@ from utils.warning_filter import WarningFilter
 WarningFilter.suppress()
 
 def main():
+# Set up argument parser
+    parser = argparse.ArgumentParser(description='Load the LoRa configuration')
+    parser.add_argument('--config', type=str, required=True,
+                       help='Read the configuration from the default folder',
+                       default="llamma2_chat_hf_qlora_xpu_config.yaml")
+    args = parser.parse_args()
+    
+    # Check if config file exists
+    if not os.path.exists(args.config):
+        print(f"Error: Config file '{args.config}' not found")
+        return
+    
     # Load configuration
-    config_path = os.path.join(os.path.dirname(__file__), 'config', 'gpt2_lora_finetune_config.yaml')
-    with open(config_path, 'r') as file:
+    with open(args.config, 'r') as file:
         config = yaml.safe_load(file)
 
     # Apply environment variables from config
