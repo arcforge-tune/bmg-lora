@@ -9,29 +9,37 @@ class ModelInstructions:
         return {k: v.to(device) for k, v in batch.items()}
 
 
-class GPT2Instructions(ModelInstructions):
+class CustomInstructions(ModelInstructions):
     pass  # Can override batch_to_device if needed
 
 
-class Llama2Instructions(ModelInstructions):
-    def batch_to_device(self, batch, device):
-        input_ids, attention_mask = batch
-        input_ids = input_ids.to(device, non_blocking=True)
-        attention_mask = attention_mask.to(device, non_blocking=True)
-        return {'input_ids': input_ids, 'attention_mask': attention_mask, 'labels': input_ids}
-
-
 class Trainer:
-    def __init__(self, model, train_loader, val_loader, configTrain, configLora, tokenizer=None, instructions=None):
+    def __init__(self, model, train_loader, val_loader, config, tokenizer=None, instructions=None):
+        # Accepts either a full config dict or split configs
+        if 'training' in config and 'model' in config and 'lora' in config['model']:
+            configTrain = config['training']
+            configLora = config['model']['lora']
+        else:
+            configTrain = config
+            configLora = {}
         self.model = model
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.configTrain = configTrain
         self.configLora = configLora
         self.tokenizer = tokenizer
-        self.device = torch.device("xpu" if configTrain.get('device', 'auto') == 'xpu' and hasattr(torch, 'xpu') and torch.xpu.is_available() else "cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device(
+            "xpu" if configTrain.get('device', 'auto') == 'xpu' and hasattr(torch, 'xpu') and torch.xpu.is_available()
+            else "cuda" if torch.cuda.is_available() else "cpu"
+        )
         self.model.to(self.device)
-        self.optimizer = AdamW(self.model.parameters(), lr=float(configTrain['learning_rate']))
+        optimizer_kwargs = {
+            "params": self.model.parameters(),
+            "lr": float(configTrain['learning_rate'])
+        }
+        if 'weight_decay' in configTrain:
+            optimizer_kwargs["weight_decay"] = float(configTrain['weight_decay'])
+        self.optimizer = AdamW(**optimizer_kwargs)
         self.instructions = instructions or ModelInstructions()
 
     def train(self, use_amp=False, grad_accum_steps=1, save_steps=None, save_checkpoint_fn=None, use_tqdm=False):
@@ -68,7 +76,8 @@ class Trainer:
                     progress.set_postfix({'loss': f'{avg_loss:.4f}', 'step': f'{global_step}/{total_steps}'})
             epoch_loss = total_loss / len(loader)
             print(f"Epoch {epoch+1} completed - Avg Loss: {epoch_loss:.4f}")
-            self.validate(epoch)
+            if(self.val_loader):
+                self.validate(epoch)
             # Clear XPU cache after each epoch
             torch.xpu.empty_cache()
         if self.configTrain.get('save_model', True):

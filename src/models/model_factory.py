@@ -11,7 +11,10 @@ except ImportError:
 
 from ipex_llm.transformers.qlora import prepare_model_for_kbit_training
 
-def create_model(model_config):
+def create_model(config):
+    return create_model_config(config['model'])
+
+def create_model_config(model_config):
     """
     Create and return a model based on the specified configuration.
 
@@ -38,7 +41,11 @@ def create_model(model_config):
     # Apply IPEX optimization if enabled
     if model_config.get('ipex', {}).get('enabled', False) and has_ipex:
         model = ipex.optimize(model.eval())
-        model.train()
+        # Gradient checkpointing
+    if model_config.get('gradient_checkpointing', False):
+        model.gradient_checkpointing_enable()
+        print("[XPU] Gradient checkpointing enabled")
+    model.train()
     # Apply LoRA if enabled
     lora_cfg = model_config.get('lora', {})
     if lora_cfg.get('enabled', False):

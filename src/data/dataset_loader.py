@@ -28,7 +28,11 @@ def preprocess_llama2_hf(example, tokenizer, max_length):
         "labels": input_enc["input_ids"]
     }
 
-def load_dataset(data_config, model_config):
+#create a method load_dataset that receive config and call load_dataset(data_config, model_config)
+def load_dataset(config):
+    return load_dataset_config(config['data'],config['model'])
+
+def load_dataset_config(data_config, model_config):
     # Support both hub datasets (with split) and local files
     if 'dataset_name' in data_config:
         dataset = datasets.load_dataset(

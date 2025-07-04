@@ -35,8 +35,8 @@ model:
 data:
   dataset_type: json
   dataset_name: yahma/alpaca-cleaned
-  split: train[:1000]
-  batch_size: 2
+  split: train[:100]
+  batch_size: 6
   max_length: 256
   num_workers: 2
 
