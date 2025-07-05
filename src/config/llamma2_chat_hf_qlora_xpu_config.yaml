@@ -39,6 +39,7 @@ data:
   batch_size: 12
   max_length: 256
   num_workers: 2
+  instruction_style: SFT_llama
 
 training:
   epochs: 5

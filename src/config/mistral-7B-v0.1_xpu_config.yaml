@@ -9,6 +9,7 @@ data:
   batch_size: 12
   max_length: 256
   num_workers: 2
+  instruction_style: CLM_llama
 
 model:
   model_id: mistralai/Mistral-7B-v0.1
@@ -43,7 +44,7 @@ model:
 
 training:
   epochs: 5
-  learning_rate: 2e-5
+  learning_rate: 1e-5
   weight_decay: 0.01
   gradient_accumulation_steps: 1
   save_steps: 100

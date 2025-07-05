@@ -3,7 +3,7 @@ from torch.utils.data import DataLoader, random_split, TensorDataset
 from transformers import AutoTokenizer
 import datasets
 
-def preprocess_gpt2_instruction_lm(example, tokenizer, max_length):
+def preprocess_CLM_gpt2(example, tokenizer, max_length):
     if "instruction" not in example or "input" not in example or "output" not in example:
         raise ValueError(f"Missing required field in example: {example}")
     text = f"{example['instruction']}\n{example['input']}"
@@ -16,7 +16,7 @@ def preprocess_gpt2_instruction_lm(example, tokenizer, max_length):
         "labels": label_enc["input_ids"]
     }
 
-def preprocess_llama2_hf(example, tokenizer, max_length):
+def preprocess_CLM_llama(example, tokenizer, max_length):
     if "instruction" not in example or "input" not in example or "output" not in example:
         raise ValueError(f"Missing required field in example: {example}")
     prompt = f"### Instruction:\n{example['instruction']}\n\n### Input:\n{example['input']}\n\n### Response:\n{example['output']}"
@@ -28,7 +28,7 @@ def preprocess_llama2_hf(example, tokenizer, max_length):
         "labels": input_enc["input_ids"]
     }
 
-def preprocess_llama2_chat_hf(example, tokenizer, max_length):
+def preprocess_SFT_llama(example, tokenizer, max_length):
     if "instruction" not in example or "output" not in example:
         raise ValueError(f"Missing required fields in example: {example}")
     instruction = example.get("instruction", "")
@@ -49,39 +49,11 @@ def preprocess_llama2_chat_hf(example, tokenizer, max_length):
         "labels": input_enc["input_ids"]
     }
 
-def preprocess_mistral(example, tokenizer, max_length):
-    if "instruction" not in example or "output" not in example:
-        raise ValueError(f"Missing required fields in example: {example}")
-
-    instruction = example.get("instruction", "")
-    input_context = example.get("input", "")
-    assistant = example.get("output", "")
-
-    # Merge instruction + input (if any)
-    if input_context:
-        user_message = f"{instruction}\n{input_context}"
-    else:
-        user_message = instruction
-
-    # Mistral base does not use chat formatting like [INST], <<SYS>>, etc.
-    # We just concatenate prompt and response.
-    prompt = f"{user_message}\n{assistant}"
-
-    # Tokenize full sequence
-    input_enc = tokenizer(prompt, padding="max_length", truncation=True, max_length=max_length)
-
-    return {
-        "input_ids": input_enc["input_ids"],
-        "attention_mask": input_enc["attention_mask"],
-        "labels": input_enc["input_ids"]
-    }
-
-
 #create a method load_dataset that receive config and call load_dataset(data_config, model_config)
 def load_dataset(config):
     return load_dataset_config(config['data'],config['model'])
 
-def load_dataset_config(data_config, model_config):
+def load_dataset_config(data_config, model_config, custom_preprocess_fn = None):
     # Support both hub datasets (with split) and local files
     if 'dataset_name' in data_config:
         dataset = datasets.load_dataset(
@@ -97,19 +69,17 @@ def load_dataset_config(data_config, model_config):
     tokenizer = AutoTokenizer.from_pretrained(model_config['tokenizer_id'], trust_remote_code=True, model_max_length=data_config['max_length'],use_fast=False)
     if model_config.get('pad_token_as_eos', False):
         tokenizer.pad_token = tokenizer.eos_token
-    model_id = model_config.get('model_id', '').lower()
-    if model_id == 'gpt2':
-        preprocess_fn = lambda ex: preprocess_gpt2_instruction_lm(ex, tokenizer, data_config['max_length'])
-    elif model_id == 'meta-llama/llama-2-7b-hf':
-        preprocess_fn = lambda ex: preprocess_llama2_hf(ex, tokenizer, data_config['max_length'])
-    elif model_id == 'meta-llama/llama-2-7b-chat-hf':
-        preprocess_fn = lambda ex: preprocess_llama2_chat_hf(ex, tokenizer, data_config['max_length'])
-    elif model_id == 'mistralai/mistral-7b-v0.1':
-        preprocess_fn = lambda ex: preprocess_mistral(ex, tokenizer, data_config['max_length'])
-    elif 'custom_preprocess_fn' in data_config and callable(data_config['custom_preprocess_fn']):
-        preprocess_fn = data_config['custom_preprocess_fn']
+    instruction_style = data_config.get('instruction_style', '')
+    if instruction_style == 'CLM_gpt2':
+        preprocess_fn = lambda ex: preprocess_CLM_gpt2(ex, tokenizer, data_config['max_length'])
+    elif instruction_style == 'CLM_llama':
+        preprocess_fn = lambda ex: preprocess_CLM_llama(ex, tokenizer, data_config['max_length'])
+    elif instruction_style == 'SFT_llama':
+        preprocess_fn = lambda ex: preprocess_SFT_llama(ex, tokenizer, data_config['max_length'])
+    elif custom_preprocess_fn is not None and callable(custom_preprocess_fn):
+        preprocess_fn = custom_preprocess_fn
     else:
-        raise ValueError(f"No preprocessing function available for model_id '{model_id}'. Please provide a custom_preprocess_fn in data_config.")
+        raise ValueError(f"No preprocessing function set. Please provide a custom_preprocess_fn in data_config.")
     # Preprocess and tokenize
     tokenized = dataset.map(preprocess_fn, batched=False, remove_columns=dataset.column_names)
     tokenized.set_format(type="torch", columns=["input_ids", "attention_mask", "labels"])
