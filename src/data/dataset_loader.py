@@ -49,6 +49,34 @@ def preprocess_llama2_chat_hf(example, tokenizer, max_length):
         "labels": input_enc["input_ids"]
     }
 
+def preprocess_mistral(example, tokenizer, max_length):
+    if "instruction" not in example or "output" not in example:
+        raise ValueError(f"Missing required fields in example: {example}")
+
+    instruction = example.get("instruction", "")
+    input_context = example.get("input", "")
+    assistant = example.get("output", "")
+
+    # Merge instruction + input (if any)
+    if input_context:
+        user_message = f"{instruction}\n{input_context}"
+    else:
+        user_message = instruction
+
+    # Mistral base does not use chat formatting like [INST], <<SYS>>, etc.
+    # We just concatenate prompt and response.
+    prompt = f"{user_message}\n{assistant}"
+
+    # Tokenize full sequence
+    input_enc = tokenizer(prompt, padding="max_length", truncation=True, max_length=max_length)
+
+    return {
+        "input_ids": input_enc["input_ids"],
+        "attention_mask": input_enc["attention_mask"],
+        "labels": input_enc["input_ids"]
+    }
+
+
 #create a method load_dataset that receive config and call load_dataset(data_config, model_config)
 def load_dataset(config):
     return load_dataset_config(config['data'],config['model'])
@@ -66,7 +94,7 @@ def load_dataset_config(data_config, model_config):
             data_files=data_config['data_files']
         )["train"]
     global tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(model_config['tokenizer_id'], trust_remote_code=True, model_max_length=data_config['max_length'])
+    tokenizer = AutoTokenizer.from_pretrained(model_config['tokenizer_id'], trust_remote_code=True, model_max_length=data_config['max_length'],use_fast=False)
     if model_config.get('pad_token_as_eos', False):
         tokenizer.pad_token = tokenizer.eos_token
     model_id = model_config.get('model_id', '').lower()
@@ -76,6 +104,8 @@ def load_dataset_config(data_config, model_config):
         preprocess_fn = lambda ex: preprocess_llama2_hf(ex, tokenizer, data_config['max_length'])
     elif model_id == 'meta-llama/llama-2-7b-chat-hf':
         preprocess_fn = lambda ex: preprocess_llama2_chat_hf(ex, tokenizer, data_config['max_length'])
+    elif model_id == 'mistralai/mistral-7b-v0.1':
+        preprocess_fn = lambda ex: preprocess_mistral(ex, tokenizer, data_config['max_length'])
     elif 'custom_preprocess_fn' in data_config and callable(data_config['custom_preprocess_fn']):
         preprocess_fn = data_config['custom_preprocess_fn']
     else:

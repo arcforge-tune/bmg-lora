@@ -60,4 +60,4 @@ def create_model_config(model_config):
     # Optionally prepare for kbit training
     if model_config.get('prepare_kbit_training', False):
         model = prepare_model_for_kbit_training(model)
-    return model
+    return (model, device)

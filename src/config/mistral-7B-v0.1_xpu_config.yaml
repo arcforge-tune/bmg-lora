@@ -1,0 +1,59 @@
+logging:
+  level: INFO
+  log_dir: outputs/logs
+
+data:
+  dataset_type: json
+  dataset_name: yahma/alpaca-cleaned
+  split: train[:1000]
+  batch_size: 12
+  max_length: 256
+  num_workers: 2
+
+model:
+  model_id: mistralai/Mistral-7B-v0.1
+  tokenizer_id: mistralai/Mistral-7B-v0.1
+  pad_token_as_eos: true
+  from_pretrained_params:
+    load_in_low_bit: nf4
+    optimize_model: false
+    torch_dtype: bfloat16
+    trust_remote_code: true
+    modules_to_not_convert: ["lm_head"]
+    use_cache: false
+  lora:
+    enabled: true
+    r: 16
+    lora_alpha: 32
+    lora_dropout: 0.05
+    target_modules:
+      - q_proj
+      - k_proj
+      - v_proj
+      - o_proj
+      - gate_proj
+      - up_proj
+      - down_proj
+    bias: none
+    task_type: CAUSAL_LM
+    training_mode: qlora
+  ipex:
+    enabled: true
+  prepare_kbit_training: true
+
+training:
+  epochs: 5
+  learning_rate: 2e-5
+  weight_decay: 0.01
+  gradient_accumulation_steps: 1
+  save_steps: 100
+  logging_steps: 1
+  report_to: none
+  output_dir: outputs/lora_mistral_7b_xpu
+  seed: 42
+  device: xpu
+  clear_xpu_cache: true
+
+environment:
+  ENABLE_ONEDNN_LAYOUT_OPT: "1"
+  ONEDNN_DEFAULT_FPMATH_MODE: "BF16"

@@ -14,7 +14,7 @@ class CustomInstructions(ModelInstructions):
 
 
 class Trainer:
-    def __init__(self, model, train_loader, val_loader, config, tokenizer=None, instructions=None):
+    def __init__(self, model, device, train_loader, val_loader, config, tokenizer=None, instructions=None):
         # Accepts either a full config dict or split configs
         if 'training' in config and 'model' in config and 'lora' in config['model']:
             configTrain = config['training']
@@ -28,11 +28,7 @@ class Trainer:
         self.configTrain = configTrain
         self.configLora = configLora
         self.tokenizer = tokenizer
-        self.device = torch.device(
-            "xpu" if configTrain.get('device', 'auto') == 'xpu' and hasattr(torch, 'xpu') and torch.xpu.is_available()
-            else "cuda" if torch.cuda.is_available() else "cpu"
-        )
-        self.model.to(self.device)
+        self.device = device
         optimizer_kwargs = {
             "params": self.model.parameters(),
             "lr": float(configTrain['learning_rate'])
