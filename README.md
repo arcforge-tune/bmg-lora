@@ -19,8 +19,45 @@ ArcForge is an open-source toolkit for fine-tuning large language models (LLMs) 
 
 ## 📦 Installation
 
-Coming soon. 
+1. Clone the repository:
+```bash
+git clone https://github.com/arcforge-tune/bmg-lora.git
+```
+
+2. Install dependencies using conda and pip:
+```bash
+conda create -n fine-tune python=3.11.13
+conda activate fine-tune
+cd bmg-lora
+pip install -r requirements.txt
+```
 
 ## 🛠️ Usage
 
-Coming soon. 
+To run training with LLaMA-2 on the Alpaca dataset examples:
+
+1. Clone the repository and install dependencies.
+
+2. Configure your training parameters in `src/config/`
+
+| File Name                     | Model ID        | Model Name              |
+|------------------------------|-----------------|-----------------------|
+| gpt2_lora_finetune_config.yaml  | gpt2           | GPT-2                 |
+| llama2_hf_qlora_xpu_config.yaml | llama2-7b-hf   | Llama 2 (7B)          |
+| llamma2_chat_hf_qlora_xpu_config.yaml | llama2-7b-chat-hf | Llama 2 (7B Chat)     |
+| mistral-7B-v0.1_xpu_config.yaml  | mistral         | Mistral (7B)                |
+
+5. Run the training for your model using the provided configuration:
+```bash
+python src/main.py --config .\src\config\llama2_hf_qlora_xpu_config.yaml
+```
+
+## Requirements
+
+- Python 3.6+
+- PyTorch
+- HuggingFace Transformers
+- Intel IPEX
+- ONEDNN library
+
+For GPU support, ensure you have the correct Intel GPU drivers installed
