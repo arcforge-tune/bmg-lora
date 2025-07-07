@@ -35,13 +35,13 @@ def main():
     setup_logger()
 
     # Load dataset
-    train_data, val_data = load_dataset(config)
+    tokenizer, train_data, val_data = load_dataset(config)
 
     # Create model
     model, device = create_model(config)
 
     # Initialize trainer
-    trainer = Trainer(model, device, train_data, val_data, config)
+    trainer = Trainer(model, device, train_data, val_data, config, tokenizer)
 
     # Start training
     trainer.train(use_amp=True,use_tqdm=True)

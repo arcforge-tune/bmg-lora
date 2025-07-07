@@ -95,4 +95,4 @@ def load_dataset_config(data_config, model_config, custom_preprocess_fn = None):
         train_data, val_data = random_split(tokenized, [train_size, val_size])
         train_loader = DataLoader(train_data, batch_size=data_config['batch_size'], shuffle=True, num_workers=num_workers)
         val_loader = DataLoader(val_data, batch_size=data_config['batch_size'], num_workers=num_workers)
-    return train_loader, val_loader
+    return tokenizer, train_loader, val_loader

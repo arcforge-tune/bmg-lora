@@ -1,3 +1,4 @@
+import os
 import torch
 from torch.optim import AdamW
 from tqdm import tqdm
@@ -38,8 +39,10 @@ class Trainer:
         self.optimizer = AdamW(**optimizer_kwargs)
         self.instructions = instructions or ModelInstructions()
 
-    def train(self, use_amp=False, grad_accum_steps=1, save_steps=None, save_checkpoint_fn=None, use_tqdm=False):
+    def train(self, use_amp=False, save_checkpoint_fn=None, use_tqdm=False):
         epochs = self.configTrain['epochs']
+        grad_accum_steps = self.configTrain.get('gradient_accumulation_steps', 1)
+        save_steps = self.configTrain.get('save_steps', 100)
         global_step = 0
         total_steps = epochs * (len(self.train_loader) // grad_accum_steps)
         for epoch in range(epochs):
@@ -65,8 +68,11 @@ class Trainer:
                     self.optimizer.step()
                     self.optimizer.zero_grad()
                     global_step += 1
-                    if save_steps and save_checkpoint_fn and global_step % save_steps == 0:
-                        save_checkpoint_fn(self.model, self.tokenizer, self.configTrain.get('output_dir', 'outputs/lora_finetuned'), global_step, epoch+1)
+                    if save_steps and global_step % save_steps == 0:
+                        if save_checkpoint_fn and callable(save_checkpoint_fn):
+                            save_checkpoint_fn()
+                        else:
+                            self.save_model(global_step, epoch+1)
                 if use_tqdm:
                     avg_loss = total_loss / (step + 1)
                     progress.set_postfix({'loss': f'{avg_loss:.4f}', 'step': f'{global_step}/{total_steps}'})
@@ -96,9 +102,10 @@ class Trainer:
         avg_loss = total_loss / len(self.val_loader)
         print(f"Epoch {epoch+1} — Val Loss: {avg_loss:.4f}")
 
-    def save_model(self):
+    def save_model(self, global_step, epoch):
         output_dir = self.configTrain.get('output_dir', 'outputs/lora_finetuned')
+        checkpoint_dir = os.path.join(output_dir, f"checkpoint-epoch{epoch}-step{global_step}")
+        os.makedirs(checkpoint_dir, exist_ok=True)
         self.model.save_pretrained(output_dir)
-        if self.tokenizer:
-            self.tokenizer.save_pretrained(output_dir)
-        print(f"\n💾 Model saved to {output_dir}")
+        self.tokenizer.save_pretrained(checkpoint_dir)
+        print(f"\n💾 Checkpoint saved at epoch {epoch}, step {global_step} -> {checkpoint_dir}")
