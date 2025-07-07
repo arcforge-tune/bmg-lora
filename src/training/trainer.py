@@ -73,20 +73,25 @@ class Trainer:
             epoch_loss = total_loss / len(loader)
             print(f"Epoch {epoch+1} completed - Avg Loss: {epoch_loss:.4f}")
             if(self.val_loader):
-                self.validate(epoch)
+                self.validate(epoch, use_amp)
             # Clear XPU cache after each epoch
             torch.xpu.empty_cache()
         if self.configTrain.get('save_model', True):
             self.save_model()
 
-    def validate(self, epoch):
+    def validate(self, epoch, use_amp):
         self.model.eval()
         total_loss = 0
         with torch.no_grad():
             for batch in self.val_loader:
-                batch = {k: v.to(self.device) for k, v in batch.items()}
-                outputs = self.model(**batch)
-                loss = outputs.loss
+                batch = {k: v.to(self.device, non_blocking=True) for k, v in batch.items()}
+                if use_amp:
+                    with torch.xpu.amp.autocast(dtype=torch.bfloat16):
+                        outputs = self.model(**batch)
+                        loss = outputs.loss
+                else:
+                    outputs = self.model(**batch)
+                    loss = outputs.loss
                 total_loss += loss.item()
         avg_loss = total_loss / len(self.val_loader)
         print(f"Epoch {epoch+1} — Val Loss: {avg_loss:.4f}")

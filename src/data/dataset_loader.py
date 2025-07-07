@@ -85,7 +85,7 @@ def load_dataset_config(data_config, model_config, custom_preprocess_fn = None):
     tokenized.set_format(type="torch", columns=["input_ids", "attention_mask", "labels"])
     # Split (only if not using a split from hub)
     num_workers = data_config.get('num_workers', 0)
-    if 'dataset_name' in data_config and 'split_ratio' not in data_config:
+    if ('dataset_name' in data_config and 'split_ratio' not in data_config) or ('data_files' in data_config):
         train_loader = DataLoader(tokenized, batch_size=data_config['batch_size'], shuffle=True, num_workers=num_workers)
         val_loader = None
     else:

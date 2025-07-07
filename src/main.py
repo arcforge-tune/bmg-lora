@@ -14,7 +14,7 @@ def main():
     parser = argparse.ArgumentParser(description='Load the LoRa configuration')
     parser.add_argument('--config', type=str, required=False,
                        help='Read the configuration from the default folder',
-                       default="llamma2_chat_hf_qlora_xpu_config.yaml")
+                       default="src/config/llama2_hf_qlora_xpu_config.yaml")
     args = parser.parse_args()
     
     # Check if config file exists
