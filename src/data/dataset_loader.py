@@ -41,12 +41,29 @@ def preprocess_SFT_llama(example, tokenizer, max_length):
     else:
         user_message = instruction
 
-    prompt = f"<s>[INST] <<SYS>>\n{sys_prompt}\n<</SYS>>\n\n{user_message} [/INST] {assistant}</s>"
-    input_enc = tokenizer(prompt, padding="max_length", truncation=True, max_length=max_length)
+    prompt = f"<s>[INST] <<SYS>>\n{sys_prompt}\n<</SYS>>\n\n{user_message} [/INST] "
+    response = f"{assistant}</s>"
+    
+    # Tokenize separately
+    prompt_enc = tokenizer(prompt, truncation=True, max_length=max_length, add_special_tokens=False)
+    response_enc = tokenizer(response, truncation=True, max_length=max_length, add_special_tokens=False)
+    
+    # Combine and create labels
+    input_ids = prompt_enc["input_ids"] + response_enc["input_ids"]
+    attention_mask = [1] * len(input_ids)
+    labels = [-100] * len(prompt_enc["input_ids"]) + response_enc["input_ids"]
+    
+    # Pad sequences
+    pad_len = max_length - len(input_ids)
+    if pad_len > 0:
+        input_ids += [tokenizer.pad_token_id] * pad_len
+        attention_mask += [0] * pad_len
+        labels += [-100] * pad_len
+    
     return {
-        "input_ids": input_enc["input_ids"],
-        "attention_mask": input_enc["attention_mask"],
-        "labels": input_enc["input_ids"]
+        "input_ids": input_ids,
+        "attention_mask": attention_mask,
+        "labels": labels
     }
 
 #create a method load_dataset that receive config and call load_dataset(data_config, model_config)

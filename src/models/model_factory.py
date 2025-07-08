@@ -38,10 +38,9 @@ def create_model_config(model_config):
         model_id,
         **pretrained_kwargs
     ).to(device)
-    # Apply IPEX optimization if enabled
-    if model_config.get('ipex', {}).get('enabled', False) and has_ipex:
-        model = ipex.optimize(model.eval())
-        # Gradient checkpointing
+    # Optionally prepare for kbit training
+    if model_config.get('prepare_kbit_training', False):
+        model = prepare_model_for_kbit_training(model)
     if model_config.get('gradient_checkpointing', False):
         model.gradient_checkpointing_enable()
         print("[XPU] Gradient checkpointing enabled")
@@ -57,7 +56,8 @@ def create_model_config(model_config):
             bias=lora_cfg['bias']
         )
         model = get_peft_model(model, lora_config)
-    # Optionally prepare for kbit training
-    if model_config.get('prepare_kbit_training', False):
-        model = prepare_model_for_kbit_training(model)
+    # Apply IPEX optimization if enabled
+    if model_config.get('ipex', {}).get('enabled', False) and has_ipex:
+        model = ipex.optimize(model.eval())
+    # Gradient checkpointing
     return (model, device)

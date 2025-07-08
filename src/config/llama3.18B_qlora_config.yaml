@@ -30,17 +30,17 @@ model:
 data:
   dataset_type: json
   # dataset_name: yahma/alpaca-cleaned   # or any instruction‑style dataset
-  data_files: data/train_data.json
+  data_files: data/datasets-pecs.json
   # split: train[:100]
-  batch_size: 4                        # small batch due to model size
-  max_length: 256
+  batch_size: 1                        # small batch due to model size
+  max_length: 2048
   # split_ratio: 0.9
-  num_workers: 2
+  num_workers: 3
   instruction_style: SFT_llama
 
 training:
-  epochs: 3                            # common recommendation ≤3 for 8B :contentReference[oaicite:2]{index=2}
-  learning_rate: 1e-5                 # from HF TRL guide :contentReference[oaicite:3]{index=3}
+  epochs: 5                            # common recommendation ≤3 for 8B :contentReference[oaicite:2]{index=2}
+  learning_rate: 5e-5                 # from HF TRL guide :contentReference[oaicite:3]{index=3}
   weight_decay: 0.01
   gradient_accumulation_steps: 4
   save_steps: 100
@@ -48,6 +48,12 @@ training:
   seed: 42
   device: xpu
   clear_xpu_cache: true
+  scheduler:
+    min_lr: 1e-6
+    max_lr: 5e-5
+    warmup_steps: 50
+    restart_interval: 2000  # Add cycle length
+    restart_mult: 1.0    # Add multiplier
 
 environment:
   ENABLE_ONEDNN_LAYOUT_OPT: "1"
