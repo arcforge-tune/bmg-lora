@@ -36,10 +36,10 @@ data:
   max_length: 2048
   # split_ratio: 0.9
   num_workers: 3
-  instruction_style: SFT_llama
+  instruction_style: SFT_llama31
 
 training:
-  epochs: 5                            # common recommendation ≤3 for 8B :contentReference[oaicite:2]{index=2}
+  epochs: 3                            # common recommendation ≤3 for 8B :contentReference[oaicite:2]{index=2}
   learning_rate: 5e-5                 # from HF TRL guide :contentReference[oaicite:3]{index=3}
   weight_decay: 0.01
   gradient_accumulation_steps: 4
