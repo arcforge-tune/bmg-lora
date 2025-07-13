@@ -34,9 +34,10 @@ pip install -r requirements.txt
 
 3. Optional for fine-tune with meta-llama/Llama-3.1-8B-Instruct
 install these packages:
+```bash
 tokenizers=0.21.2
 transformers=4.53.1
-
+```
 ## 🛠️ Usage
 
 To run training with LLaMA-2 on the Alpaca dataset examples:
