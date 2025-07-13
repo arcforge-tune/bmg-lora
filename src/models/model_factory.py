@@ -1,6 +1,7 @@
 # from transformers import AutoModelForCausalLM
-from peft import get_peft_model, LoraConfig
 import torch
+import os
+from peft import get_peft_model, set_peft_model_state_dict, LoraConfig
 from ipex_llm.transformers import AutoModelForCausalLM
 
 try:
@@ -11,10 +12,10 @@ except ImportError:
 
 from ipex_llm.transformers.qlora import prepare_model_for_kbit_training
 
-def create_model(config):
-    return create_model_config(config['model'])
+def create_model(config, checkpoint_path=None):
+    return create_model_config(config['model'], checkpoint_path)
 
-def create_model_config(model_config):
+def create_model_config(model_config, checkpoint_path):
     """
     Create and return a model based on the specified configuration.
 
@@ -56,6 +57,13 @@ def create_model_config(model_config):
             bias=lora_cfg['bias']
         )
         model = get_peft_model(model, lora_config)
+
+        if checkpoint_path:
+            adapter_path = os.path.join(checkpoint_path, "adapter_model.bin")
+            if os.path.exists(adapter_path):
+                print(f"Loading adapter weights from {adapter_path}")
+                adapter_weights = torch.load(adapter_path)
+                set_peft_model_state_dict(model, adapter_weights)
     # Apply IPEX optimization if enabled
     if model_config.get('ipex', {}).get('enabled', False) and has_ipex:
         model = ipex.optimize(model.eval())

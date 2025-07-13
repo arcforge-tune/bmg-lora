@@ -4,6 +4,7 @@ import json
 import math
 from torch.optim import AdamW
 from tqdm import tqdm
+from peft import get_peft_model_state_dict
 
 class ModelInstructions:
     def batch_to_device(self, batch, device):
@@ -186,21 +187,25 @@ class TrainerResumeCheckpoint:
         print(f"Epoch {epoch+1} — Val Loss: {avg_loss:.4f}")
 
     def save_checkpoint(self, global_step, epoch):
-        """Save full training state (1-based epoch)"""
         checkpoint_dir = os.path.join(
             self.output_dir, 
             f"checkpoint-epoch{epoch+1}-step{global_step}"
         )
         os.makedirs(checkpoint_dir, exist_ok=True)
         
-        # Save model components
-        self.model.save_pretrained(checkpoint_dir)
+        # Save ONLY adapter weights (not full model)
+        if hasattr(self.model, 'save_adapter'):
+            self.model.save_adapter(checkpoint_dir, "lora_adapter")
+        elif hasattr(self.model, 'peft_config'):  # For newer PEFT versions
+            self.model.save_pretrained(checkpoint_dir)
+        
+        # Save tokenizer
         if self.tokenizer:
             self.tokenizer.save_pretrained(checkpoint_dir)
         
-        # Save training state
+        # Save training state separately
         checkpoint = {
-            'epoch': epoch,  # Store 0-based for internal use
+            'epoch': epoch,
             'global_step': global_step,
             'optimizer_state': self.optimizer.state_dict(),
             'scheduler_state': self.scheduler.state_dict() if self.scheduler else None,
@@ -208,31 +213,24 @@ class TrainerResumeCheckpoint:
         }
         torch.save(checkpoint, os.path.join(checkpoint_dir, "training_state.pt"))
         
-        # Save readable config
-        with open(os.path.join(checkpoint_dir, "config.json"), "w") as f:
-            json.dump(self.configTrain, f, indent=2)
+        # Save adapter separately
+        if hasattr(self.model, 'save_pretrained'):
+            adapter_path = os.path.join(checkpoint_dir, "adapter_model.bin")
+            torch.save(get_peft_model_state_dict(self.model), adapter_path)
         
         print(f"💾 Checkpoint saved: Epoch {epoch+1}, Step {global_step} -> {checkpoint_dir}")
         return checkpoint_dir
 
     def load_checkpoint(self, checkpoint_path):
-        """Load training state from checkpoint"""
         state_path = os.path.join(checkpoint_path, "training_state.pt")
-        if not os.path.exists(state_path):
-            raise FileNotFoundError(f"Checkpoint state not found: {state_path}")
-        
         checkpoint = torch.load(state_path)
-        print(f"Loaded checkpoint: epoch={checkpoint['epoch']}, step={checkpoint['global_step']}")
-
-        # Load optimizer state
+        
+        # Load ONLY training state (not model weights)
         self.optimizer.load_state_dict(checkpoint['optimizer_state'])
         
-        # Load scheduler state
         if self.scheduler and checkpoint['scheduler_state']:
             self.scheduler.load_state_dict(checkpoint['scheduler_state'])
-            # Restore scheduler's internal step counter
             self.scheduler.step_count = checkpoint['scheduler_state']['step_count']
-            print(f"Restored scheduler: step_count={self.scheduler.step_count}")
         
         return checkpoint['epoch'], checkpoint['global_step']
 

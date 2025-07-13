@@ -39,7 +39,7 @@ def main():
     tokenizer, train_data, val_data = load_dataset(config)
 
     # Create model
-    model, device = create_model(config)
+    model, device = create_model(config, checkpoint_path=args.resume)
 
     # Initialize trainer
     trainer = TrainerResumeCheckpoint(model, device, train_data, val_data, config, tokenizer)
