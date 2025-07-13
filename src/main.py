@@ -3,18 +3,19 @@ import os
 import yaml
 from data.dataset_loader import load_dataset
 from models.model_factory import create_model
-from training.trainer import Trainer
+from training.trainer_resume_checkpoint import TrainerResumeCheckpoint
 from utils.logger import setup_logger
 from utils.warning_filter import WarningFilter
 
-WarningFilter.suppress()
 
 def main():
+    WarningFilter.suppress()
 # Set up argument parser
     parser = argparse.ArgumentParser(description='Load the LoRa configuration')
     parser.add_argument('--config', type=str, required=False,
                        help='Read the configuration from the default folder',
-                       default="src/config/llama2_hf_qlora_xpu_config.yaml")
+                       default="src/config/llama3.18B_qlora_config.yaml")
+    parser.add_argument("--resume", help="Path to checkpoint directory", default= None)#"outputs/lora_llama3_1_8b_instruct_xpu\checkpoint-epoch0-step11")
     args = parser.parse_args()
     
     # Check if config file exists
@@ -41,10 +42,10 @@ def main():
     model, device = create_model(config)
 
     # Initialize trainer
-    trainer = Trainer(model, device, train_data, val_data, config, tokenizer)
+    trainer = TrainerResumeCheckpoint(model, device, train_data, val_data, config, tokenizer)
 
     # Start training
-    trainer.train(use_amp=True,use_tqdm=True)
+    trainer.train(use_amp=True,use_tqdm=True, resume_checkpoint=args.resume)
 
 if __name__ == "__main__":
     main()
