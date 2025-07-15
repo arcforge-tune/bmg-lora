@@ -5,11 +5,9 @@ from data.dataset_loader import load_dataset
 from models.model_factory import create_model
 from training.trainer_resume_checkpoint import TrainerResumeCheckpoint
 from utils.logger import setup_logger
-from utils.warning_filter import WarningFilter
 
 
 def main():
-    WarningFilter.suppress()
 # Set up argument parser
     parser = argparse.ArgumentParser(description='Load the LoRa configuration')
     parser.add_argument('--config', type=str, required=False,
