@@ -2,9 +2,8 @@ outputs/*
 data/*
 .vscode/*
 .env
-src/utils/__pycache__/*
-src/training/__pycache__/*
-src/models/__pycache__/*
-src/data/__pycache__/*
-src/data/__pycache__/*
 logs/training.log
+src/data/__pycache__/dataset_loader.cpython-311.pyc
+src/models/__pycache__/model_factory.cpython-311.pyc
+src/training/__pycache__/trainer.cpython-311.pyc
+src/utils/__pycache__/logger.cpython-311.pyc

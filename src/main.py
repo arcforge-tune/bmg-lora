@@ -3,9 +3,7 @@ import os
 import yaml
 from data.dataset_loader import load_dataset
 from models.model_factory import create_model
-from training.trainer_resume_checkpoint import TrainerResumeCheckpoint
-from utils.logger import setup_logger
-
+from training.trainer import Trainer
 
 def main():
 # Set up argument parser
@@ -30,9 +28,6 @@ def main():
         for key, value in config['environment'].items():
             os.environ[key] = str(value)
 
-    # Setup logging
-    setup_logger()
-
     # Load dataset
     tokenizer, train_data, val_data = load_dataset(config)
 
@@ -40,7 +35,7 @@ def main():
     model, device = create_model(config, checkpoint_path=args.resume)
 
     # Initialize trainer
-    trainer = TrainerResumeCheckpoint(model, device, train_data, val_data, config, tokenizer)
+    trainer = Trainer(model, device, train_data, val_data, config, tokenizer)
 
     # Start training
     trainer.train(use_amp=True,use_tqdm=True, resume_checkpoint=args.resume)
