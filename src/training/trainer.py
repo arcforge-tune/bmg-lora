@@ -134,7 +134,7 @@ class Trainer:
         os.makedirs(checkpoint_dir, exist_ok=True)
         self.model.save_pretrained(output_dir)
         self.tokenizer.save_pretrained(checkpoint_dir)
-        print(f"\n💾 Checkpoint saved at epoch {epoch}, step {global_step} -> {checkpoint_dir}")
+        print(f"Checkpoint saved at epoch {epoch}, step {global_step} -> {checkpoint_dir}")
 
 import math
 

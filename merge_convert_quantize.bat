@@ -1,78 +1,74 @@
-@echo off
-setlocal enabledelayedexpansion
+<#
+.SYNOPSIS
+    Launch Llama-QLoRA training with only checkpoint-loading bars, XPU messages, and clean tqdm updates.
 
-:: Configuration
-set BASE_DIR=%~dp0
-:: install steps for llama.cpp
-:: git clone https://github.com/ggerganov/llama.cpp
-:: cd llama.cpp
-:: cmake . -B build
-:: cmake --build build --config Release
-set LLAMA_PATH=c:\llm\llama.cpp
-set CONDA_MERGE_ENV=test-qlora-ipex
-set CONDA_LLAMA_ENV=llama-convert
-set BUILD_DIR=%LLAMA_PATH%\build\bin\Release
+.PARAMETER Config
+    Path to your YAML config file.
 
-:: Parse arguments
-set "BASE_MODEL="
-set "LORA_DIR="
+.PARAMETER Resume
+    (Optional) Path to resume checkpoint directory.
 
-:parse_args
-if "%~1"=="" goto end_args
-if "%~1"=="--base_model" (
-    set "BASE_MODEL=%~2"
-    shift
-) else if "%~1"=="--lora_adapter_dir" (
-    set "LORA_DIR=%~2"
-    shift
-)
-shift
-goto parse_args
-:end_args
-
-:: Validate arguments
-if "!BASE_MODEL!"=="" (
-    echo Error: Missing --base_model argument
-    exit /b 1
-)
-if "!LORA_DIR!"=="" (
-    echo Error: Missing --lora_adapter_dir argument
-    exit /b 1
+#>
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory)][string]$Config,
+    [Parameter()][string]$Resume
 )
 
-:: Generate output names
-for %%A in ("%LORA_DIR%") do set "FOLDER_NAME=%%~nxA"
-set MERGED_OUTPUT=%BASE_DIR%outputs\%FOLDER_NAME%_merged
-set GGUF_F16=%BASE_DIR%outputs\%FOLDER_NAME%_f16.gguf
-set GGUF_Q4=%BASE_DIR%outputs\%FOLDER_NAME%_q4_0.gguf
+function Filter-Line {
+    param([string]$Line)
 
-:: Step 1: Merge LoRA with base model
-echo [1/3] Merging LoRA adapter...
-call conda activate %CONDA_MERGE_ENV%
-python "%BASE_DIR%src\merge_lora_and_export.py" ^
-    --base_model "%BASE_MODEL%" ^
-    --lora_adapter_dir "%LORA_DIR%" ^
-    --merged_output_dir "%MERGED_OUTPUT%"
-if %errorlevel% neq 0 exit /b %errorlevel%
+    # Any tqdm-style bar; strip off trailing “[W…]” junk
+    if ($Line -match "^(.*?%\|.*?])(\[.*)$") {
+        return $matches[1]
+    }
+    if ($Line -match "\d+%.*\|") {
+        return $Line
+    }
 
-:: Step 2: Convert to GGUF F16
-echo [2/3] Converting to GGUF F16...
-call conda activate %CONDA_LLAMA_ENV%
-python "%LLAMA_PATH%\convert_hf_to_gguf.py" ^
-    "%MERGED_OUTPUT%" ^
-    --outfile "%GGUF_F16%" ^
-    --outtype f16
-if %errorlevel% neq 0 exit /b %errorlevel%
+    # Standalone “[XPU] Gradient checkpointing enabled”
+    if ($Line -match "^\[XPU\] Gradient checkpointing enabled") {
+        return $Line
+    }
 
-:: Step 3: Quantize to Q4_0
-echo [3/3] Quantizing to Q4_0...
-"%BUILD_DIR%\llama-quantize.exe" ^
-    "%GGUF_F16%" ^
-    "%GGUF_Q4%" ^
-    Q4_0
-if %errorlevel% neq 0 exit /b %errorlevel%
+    # Otherwise drop
+    return $null
+}
 
-echo All operations completed successfully!
-echo Merged model: %MERGED_OUTPUT%
-echo F16 GGUF: %GGUF_F16%
-echo Q4_0 GGUF: %GGUF_Q4%
+# Build python invocation
+$pythonExe  = "python"
+$scriptPath = Join-Path $PSScriptRoot "src\main.py"
+$args       = @("--config", $Config)
+if ($Resume) { $args += @("--resume", $Resume) }
+
+# Execute and filter both stdout+stderr
+& $pythonExe $scriptPath @args 2>&1 |
+  ForEach-Object {
+    $line = $_
+
+    # 1) If it's the combined Loading+XPU on one line, split it right here
+    if ($line -match "^(Loading checkpoint shards:.*?\])(\[XPU\] Gradient checkpointing enabled)") {
+        # print the bar in-place...
+        Write-Host "`r$($matches[1])" -NoNewline
+        # then a newline so we flush the bar...
+        Write-Host ""
+        # then the XPU message on its own line
+        Write-Host $matches[2]
+        return
+    }
+
+    # 2) Otherwise let Filter-Line decide
+    $out = Filter-Line $line
+    if ($null -eq $out) { return }
+
+    # 3) Print bars in-place, everything else normally
+    if ($out -match "\d+%.*\|") {
+        Write-Host "`r$out" -NoNewline
+    }
+    else {
+        Write-Host $out
+    }
+  }
+
+# Final newline so your prompt lands cleanly
+Write-Host ""

@@ -59,7 +59,7 @@ class TrainerResumeCheckpoint:
         if resume_checkpoint:
             start_epoch, global_step = self.load_checkpoint(resume_checkpoint)
             batches_done_in_epoch = (global_step * self.grad_accum_steps) % self.batches_per_epoch
-            print(f"Resuming: epoch={start_epoch}, global_step={global_step}, "
+            print(f"\nResuming: epoch={start_epoch}, global_step={global_step}, "
                   f"batches_done={batches_done_in_epoch}/{self.batches_per_epoch}, "
                   f"total_steps={self.total_steps}")
 
@@ -161,12 +161,12 @@ class TrainerResumeCheckpoint:
         
         # Save final model
         if self.configTrain.get('save_model', True):
-            print("[XPU] Saving final LoRA adapter...")
+            print("\n[XPU] Saving final LoRA adapter...")
             output_dir = self.configTrain.get('output_dir', 'outputs/lora_finetuned')
             os.makedirs(output_dir, exist_ok=True)
             self.model.save_pretrained(output_dir)
             self.tokenizer.save_pretrained(output_dir)
-            print(f"[XPU] Final model saved to {output_dir}")
+            print(f"\n[XPU] Final model saved to {output_dir}")
 
     def validate(self, epoch, use_amp):
         self.model.eval()
@@ -217,7 +217,7 @@ class TrainerResumeCheckpoint:
             adapter_path = os.path.join(checkpoint_dir, "adapter_model.bin")
             torch.save(get_peft_model_state_dict(self.model), adapter_path)
         
-        print(f"💾 Checkpoint saved: Epoch {epoch+1}, Step {global_step} -> {checkpoint_dir}")
+        print(f"Checkpoint saved: Epoch {epoch+1}, Step {global_step} -> {checkpoint_dir}")
         return checkpoint_dir
 
     def load_checkpoint(self, checkpoint_path):
