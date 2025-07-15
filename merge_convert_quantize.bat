@@ -3,10 +3,10 @@ REM === Usage: merge_convert_quantize.bat --base_model "model_name" --lora_adapt
 
 REM === Configuration Variables ===
 set "PROJECT_ROOT=%cd%"
-set "CONDA_ENV_MERGE=myenv"
-set "CONDA_ENV_LLAMA=myenv"
-set "LLAMA_ROOT=c:\llama.cpp"
-set "LLAMA_BUILD=c:\llama.cpp\build\bin\Release"
+set "CONDA_ENV_MERGE=test-qlora-ipex"
+set "CONDA_ENV_LLAMA=llama-convert"
+set "LLAMA_ROOT=c:\llm\llama.cpp"
+set "LLAMA_BUILD=c:\llm\llama.cpp\build\bin\Release"
 
 REM === Parse Arguments ===
 setlocal ENABLEDELAYEDEXPANSION
