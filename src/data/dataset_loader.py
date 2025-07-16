@@ -19,13 +19,40 @@ def preprocess_CLM_gpt2(example, tokenizer, max_length):
 def preprocess_CLM_llama(example, tokenizer, max_length):
     if "instruction" not in example or "input" not in example or "output" not in example:
         raise ValueError(f"Missing required field in example: {example}")
-    prompt = f"### Instruction:\n{example['instruction']}\n\n### Input:\n{example['input']}\n\n### Response:\n{example['output']}"
-    input_enc = tokenizer(prompt, padding="max_length", truncation=True, max_length=max_length)
-    # For Llama2, use input_ids as both input and labels (causal LM)
+    instruction = example.get('instruction')
+    input_context = example.get('input', '')
+    assistant = example.get('output')
+
+    prompt = f"### Instruction:\n{instruction}\n\n### Input:\n{input_context}\n\n### Response:\n"
+    response = f"\n{assistant}"
+
+    prompt_enc = tokenizer(prompt, padding="max_length", truncation=True, max_length=max_length)
+    response_enc = tokenizer(response, padding="max_length", truncation=True, max_length=max_length)
+
+    input_ids = prompt_enc["input_ids"] + response_enc["input_ids"]
+    attention_mask = [1] * len(input_ids)
+
+
+    # Ensure the combined length does not exceed max_length
+    combined_length = len(prompt_enc["input_ids"]) + len(response_enc["input_ids"])
+    if combined_length > max_length:
+        # Adjust response length to fit within max_length
+        response_enc = tokenizer(
+            response,
+            truncation=True,
+            max_length=max_length - len(prompt_enc["input_ids"]),
+            add_special_tokens=False,
+        )
+    
+    labels = [-100] * len(prompt_enc["input_ids"]) + response_enc["input_ids"]
+    
+    # Pad labels to match max_length
+    pad_len = max_length - len(labels)
+
     return {
-        "input_ids": input_enc["input_ids"],
-        "attention_mask": input_enc["attention_mask"],
-        "labels": input_enc["input_ids"]
+        "input_ids": input_ids,
+        "attention_mask": attention_mask,
+        "labels": labels
     }
 
 def preprocess_SFT_llama(example, tokenizer, max_length):
@@ -51,15 +78,24 @@ def preprocess_SFT_llama(example, tokenizer, max_length):
     # Combine and create labels
     input_ids = prompt_enc["input_ids"] + response_enc["input_ids"]
     attention_mask = [1] * len(input_ids)
+
+    # Ensure the combined length does not exceed max_length
+    combined_length = len(prompt_enc["input_ids"]) + len(response_enc["input_ids"])
+    if combined_length > max_length:
+        # Adjust response length to fit within max_length
+        response_enc = tokenizer(
+            response,
+            truncation=True,
+            max_length=max_length - len(prompt_enc["input_ids"]),
+            add_special_tokens=False,
+        )
+    
     labels = [-100] * len(prompt_enc["input_ids"]) + response_enc["input_ids"]
     
-    # Pad sequences
-    pad_len = max_length - len(input_ids)
+    # Pad labels to match max_length
+    pad_len = max_length - len(labels)
     if pad_len > 0:
-        input_ids += [tokenizer.pad_token_id] * pad_len
-        attention_mask += [0] * pad_len
         labels += [-100] * pad_len
-    
     return {
         "input_ids": input_ids,
         "attention_mask": attention_mask,
@@ -96,7 +132,23 @@ def preprocess_SFT_llama31(example, tokenizer, max_length):
     # Combine and create labels
     input_ids = prompt_enc["input_ids"] + response_enc["input_ids"]
     attention_mask = [1] * len(input_ids)
+
+
+    # Ensure the combined length does not exceed max_length
+    combined_length = len(prompt_enc["input_ids"]) + len(response_enc["input_ids"])
+    if combined_length > max_length:
+        # Adjust response length to fit within max_length
+        response_enc = tokenizer(
+            response,
+            truncation=True,
+            max_length=max_length - len(prompt_enc["input_ids"]),
+            add_special_tokens=False,
+        )
+    
     labels = [-100] * len(prompt_enc["input_ids"]) + response_enc["input_ids"]
+    
+    # Pad labels to match max_length
+    pad_len = max_length - len(labels)
     
     # Pad sequences
     pad_len = max_length - len(input_ids)
@@ -147,6 +199,7 @@ def load_dataset_config(data_config, model_config, custom_preprocess_fn = None):
         raise ValueError(f"No preprocessing function set. Please provide a custom_preprocess_fn in data_config.")
     # Preprocess and tokenize
     tokenized = dataset.map(preprocess_fn, batched=False, remove_columns=dataset.column_names)
+    tokenized = tokenized.filter(lambda row: len(row['input_ids']) <= data_config['max_length'])
     tokenized.set_format(type="torch", columns=["input_ids", "attention_mask", "labels"])
     # Split (only if not using a split from hub)
     num_workers = data_config.get('num_workers', 0)

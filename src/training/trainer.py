@@ -126,7 +126,7 @@ class Trainer:
                     global_step += 1
                     
                     # Save checkpoint
-                    save_steps = self.configTrain.get('save_steps', 100)
+                    save_steps = self.configTrain.get('save_steps')
                     if save_steps and global_step % save_steps == 0:
                         if save_checkpoint_fn and callable(save_checkpoint_fn):
                             save_checkpoint_fn()

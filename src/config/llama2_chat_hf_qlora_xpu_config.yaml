@@ -36,8 +36,8 @@ data:
   dataset_type: json
   dataset_name: yahma/alpaca-cleaned
   split: train[:100]
-  batch_size: 12
-  max_length: 256
+  batch_size: 1
+  max_length: 2048
   num_workers: 2
   instruction_style: SFT_llama
 
@@ -47,7 +47,7 @@ training:
   weight_decay: 0.01
   gradient_accumulation_steps: 3
   save_steps: 100
-  output_dir: outputs/lora_llama2_7b-chat-hf_xpu
+  output_dir: outputs/llama2_chat_hf_qlora_xpu
   seed: 42
   device: xpu
   clear_xpu_cache: true

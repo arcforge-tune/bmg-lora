@@ -5,9 +5,9 @@ logging:
 data:
   dataset_type: json
   dataset_name: yahma/alpaca-cleaned
-  split: train[:1000]
-  batch_size: 12
-  max_length: 256
+  split: train[:100]
+  batch_size: 1
+  max_length: 2048
   num_workers: 2
   instruction_style: CLM_llama
 
@@ -50,7 +50,7 @@ training:
   save_steps: 100
   logging_steps: 1
   report_to: none
-  output_dir: outputs/lora_mistral_7b_xpu
+  output_dir: outputs/mistral-7B-v0.1_xpu
   seed: 42
   device: xpu
   clear_xpu_cache: true

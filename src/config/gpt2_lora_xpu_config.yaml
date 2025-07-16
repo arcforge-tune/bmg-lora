@@ -6,8 +6,8 @@ data:
   dataset_type: json
   dataset_name: yahma/alpaca-cleaned
   split: train[:100]
-  batch_size: 4
-  max_length: 128
+  batch_size: 1
+  max_length: 2048
   split_ratio: 0.9
   instruction_style: CLM_gpt2
 
@@ -28,6 +28,6 @@ model:
 training:
   epochs: 5
   learning_rate: 0.0005
-  output_dir: outputs/lora_finetuned
+  output_dir: outputs/gpt2_lora_xpu
   save_model: true
   device: xpu  # "xpu" if available, else "cpu"

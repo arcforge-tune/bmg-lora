@@ -33,6 +33,10 @@ function Filter-Line {
         return "`n" + $Line
     }
 
+    if ($Line -match 'Epoch \d+/\d+:') {
+        return $Line -replace '(?<=Epoch \d+/\d+:.*?\])(.*\.py:\d+: UserWarning.*|\[W\d+.*)', ''
+    }
+    
     # 3) Any tqdm‑style bar: strip off any trailing “[W...”, keep only up through the first closing “]”
     if ($Line -match "^(.*?%\|.*?])(\[.*)$") {
         return $matches[1]
