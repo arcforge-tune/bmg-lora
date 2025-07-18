@@ -12,14 +12,17 @@ model:
   gradient_checkpointing: true
   lora:
     enabled: true
-    r: 16                               # per HF examples for 8B size :contentReference[oaicite:1]{index=1}
-    lora_alpha: 32
-    lora_dropout: 0.05
+    r: 32                               # per HF examples for 8B size :contentReference[oaicite:1]{index=1}
+    lora_alpha: 64
+    lora_dropout: 0.15
     target_modules:
       - q_proj
       - k_proj
       - v_proj
       - o_proj
+      - gate_proj
+      - up_proj
+      - down_proj
     bias: none
     task_type: CAUSAL_LM
     training_mode: qlora
@@ -39,11 +42,11 @@ data:
   instruction_style: SFT_llama31
 
 training:
-  epochs: 4                            # common recommendation ≤3 for 8B :contentReference[oaicite:2]{index=2}
+  epochs: 5                            # common recommendation ≤3 for 8B :contentReference[oaicite:2]{index=2}
   learning_rate: 5e-5                 # from HF TRL guide :contentReference[oaicite:3]{index=3}
-  weight_decay: 0.01
-  gradient_accumulation_steps: 4
-  save_steps: 250
+  weight_decay: 0.02
+  gradient_accumulation_steps: 2
+  save_steps: 500
   output_dir: outputs/llama3.18B_qlora_xpu
   seed: 42
   device: xpu
@@ -51,7 +54,7 @@ training:
   scheduler:
     min_lr: 1e-6
     max_lr: 5e-5
-    warmup_steps: 50
+    warmup_steps: 200
     restart_interval: 100  # Add cycle length
     restart_mult: 1.0    # Add multiplier
 
