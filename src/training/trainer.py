@@ -18,8 +18,7 @@ class Trainer:
             configTrain = config['training']
             configLora = config['model']['lora']
         else:
-            configTrain = config
-            configLora = {}
+            raise ValueError(f"Missing training config")
         self.model = model
         self.train_loader = train_loader
         self.val_loader = val_loader
@@ -48,6 +47,7 @@ class Trainer:
         self.grad_accum_steps = self.configTrain.get('gradient_accumulation_steps', 1)
         self.epochs = configTrain['epochs']
         self.total_steps = (self.epochs * self.batches_per_epoch) // self.grad_accum_steps
+        self.model_id = config['model'].get('model_id')
 
     def train(self, use_amp=False, save_checkpoint_fn=None, use_tqdm=False, resume_checkpoint=None):
         # Initialize training state
@@ -167,6 +167,7 @@ class Trainer:
             self.model.save_pretrained(output_dir)
             self.tokenizer.save_pretrained(output_dir)
             print(f"\n[XPU] Final model saved to {output_dir}")
+            print(f"\nYou can run this script to merge and export it:\nmerge_convert_quantize.bat --base_model {self.model_id} --lora_adapter_dir {self.configTrain['output_dir']}")
 
     def validate(self, epoch, use_amp):
         self.model.eval()

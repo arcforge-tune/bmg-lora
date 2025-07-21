@@ -1,52 +1,41 @@
-# from transformers import AutoModelForCausalLM
 import torch
 import os
-from peft import get_peft_model, set_peft_model_state_dict, LoraConfig
-from ipex_llm.transformers import AutoModelForCausalLM
+from peft import get_peft_model, set_peft_model_state_dict, LoraConfig, prepare_model_for_kbit_training
+from transformers import AutoModelForCausalLM, BitsAndBytesConfig
 
 try:
     import intel_extension_for_pytorch as ipex
+    from intel_extension_for_pytorch.llm.functional.utils import ipex_update_causal_mask
     has_ipex = True
 except ImportError:
     has_ipex = False
-
-from ipex_llm.transformers.qlora import prepare_model_for_kbit_training
 
 def create_model(config, checkpoint_path=None):
     return create_model_config(config['model'], checkpoint_path)
 
 def create_model_config(model_config, checkpoint_path):
-    """
-    Create and return a model based on the specified configuration.
-
-    Args:
-        config (dict): Configuration dictionary containing model parameters.
-
-    Returns:
-        model: An instance of the specified model architecture.
-    """
     model_id = model_config['model_id']
     device = torch.device("xpu" if model_config.get('ipex', {}).get('enabled', False) and torch.xpu.is_available() else "cpu")
 
-    # Get from_pretrained_params as a dict from config
-    pretrained_kwargs = model_config.get("from_pretrained_params", {})
-
-    # Convert torch_dtype string to actual torch dtype if present
-    if "torch_dtype" in pretrained_kwargs and isinstance(pretrained_kwargs["torch_dtype"], str):
-        pretrained_kwargs["torch_dtype"] = getattr(torch, pretrained_kwargs["torch_dtype"])
+    bnb_config = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_use_double_quant=False,
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype=torch.bfloat16
+    )
 
     model = AutoModelForCausalLM.from_pretrained(
         model_id,
-        **pretrained_kwargs
-    ).to(device)
-    # Optionally prepare for kbit training
-    if model_config.get('prepare_kbit_training', False):
-        model = prepare_model_for_kbit_training(model)
+        quantization_config=bnb_config,
+        device_map={'': torch.xpu.current_device()} if device.type == "xpu" else None
+    )
+
+    model = prepare_model_for_kbit_training(model)
+
     if model_config.get('gradient_checkpointing', False):
         model.gradient_checkpointing_enable()
         print("[XPU] Gradient checkpointing enabled")
-    model.train()
-    # Apply LoRA if enabled
+
     lora_cfg = model_config.get('lora', {})
     if lora_cfg.get('enabled', False):
         lora_config = LoraConfig(
@@ -54,7 +43,8 @@ def create_model_config(model_config, checkpoint_path):
             lora_alpha=lora_cfg['lora_alpha'],
             target_modules=lora_cfg['target_modules'],
             lora_dropout=lora_cfg['lora_dropout'],
-            bias=lora_cfg['bias']
+            bias=lora_cfg['bias'],
+            task_type="CAUSAL_LM"
         )
         model = get_peft_model(model, lora_config)
 
@@ -64,8 +54,8 @@ def create_model_config(model_config, checkpoint_path):
                 print(f"Loading adapter weights from {adapter_path}")
                 adapter_weights = torch.load(adapter_path)
                 set_peft_model_state_dict(model, adapter_weights)
-    # Apply IPEX optimization if enabled
-    if model_config.get('ipex', {}).get('enabled', False) and has_ipex:
-        model = ipex.optimize(model.eval())
-    # Gradient checkpointing
+
+    if model_config.get('ipex', {}).get('optimize_model', False) and has_ipex:
+        model = ipex.optimize(model.eval(), dtype=torch.bfloat16)
+        ipex_update_causal_mask(model)
     return (model, device)

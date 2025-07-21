@@ -24,6 +24,7 @@ model:
     bias: none
   ipex:
     enabled: true
+    optimize_model: false
 
 training:
   epochs: 5
@@ -31,3 +32,10 @@ training:
   output_dir: outputs/gpt2_lora_xpu
   save_model: true
   device: xpu  # "xpu" if available, else "cpu"
+  clear_xpu_cache: true
+  scheduler:
+    min_lr: 1e-6
+    max_lr: 5e-5
+    warmup_steps: 50
+    restart_interval: 100  # Add cycle length
+    restart_mult: 1.0    # Add multiplier

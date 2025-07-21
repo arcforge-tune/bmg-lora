@@ -1,8 +1,7 @@
 import argparse
 import os
 import torch
-from transformers import AutoTokenizer
-from ipex_llm.transformers import AutoModelForCausalLM
+from transformers import AutoTokenizer, AutoModelForCausalLM
 from peft import PeftModel
 import intel_extension_for_pytorch as ipex
 
@@ -24,34 +23,29 @@ parser.add_argument('--optimize', type=bool, default=False,
 args = parser.parse_args()
 
 # Set device based on argument
-if args.device_type == 'xpu':
-    device = torch.device('xpu')
-else:
-    device = torch.device('cpu')
+device = torch.device('xpu' if args.device_type == 'xpu' and torch.xpu.is_available() else 'cpu')
 
 def merge_lora_and_export():
     print(f"[{device}] Loading full-precision base model for merging...")
     model = AutoModelForCausalLM.from_pretrained(
         args.base_model,
-        torch_dtype=torch.float32,           # ❗ Full precision required for merge
+        torch_dtype=torch.float32,           # Full precision required for merge
         trust_remote_code=True,
         use_cache=True,
-        optimize_model=False
+        device_map={'': torch.xpu.current_device()} if device.type == "xpu" else None
     )
     
-    if args.device_type == 'xpu':
-        model = model.to(device)
+    # model = model.to(device)
 
     print(f"[{device}] Loading and attaching LoRA adapter...")
     model = PeftModel.from_pretrained(model, args.lora_adapter_dir).to(device)
 
     print(f"[{device}] Merging LoRA weights into base model...") 
-    model = model.merge_and_unload()  # ✅ Now this will work
+    model = model.merge_and_unload()
 
-    if args.optimize:
+    if args.optimize and device.type == "xpu":
         print("[XPU] Applying IPEX optimization for inference...")
-        optimized_model = ipex.optimize(model.eval())
-        # You can save the optimized model here...
+        optimized_model = ipex.optimize(model.eval(), dtype=torch.bfloat16)
         model = optimized_model
 
     print(f"[{device}] Saving merged model to {args.merged_output_dir}...")

@@ -3,47 +3,40 @@ model:
   tokenizer_id: meta-llama/Llama-3.1-8B-Instruct
   pad_token_as_eos: true
   from_pretrained_params:
-    load_in_low_bit: nf4              # 4‑bit NormalFloat quantization (QN4)
-    optimize_model: false
     torch_dtype: bfloat16
     trust_remote_code: true
-    modules_to_not_convert: ["lm_head"]
     use_cache: false
   gradient_checkpointing: true
   lora:
     enabled: true
-    r: 32                               # per HF examples for 8B size :contentReference[oaicite:1]{index=1}
-    lora_alpha: 64
-    lora_dropout: 0.15
+    r: 16
+    lora_alpha: 32
+    lora_dropout: 0.05
     target_modules:
       - q_proj
-      - k_proj
       - v_proj
-      - o_proj
-      - gate_proj
-      - up_proj
-      - down_proj
     bias: none
     task_type: CAUSAL_LM
     training_mode: qlora
   ipex:
     enabled: true
+    optimize_model: false
   prepare_kbit_training: true
 
 data:
   dataset_type: json
-  # dataset_name: yahma/alpaca-cleaned   # or any instruction‑style dataset
-  data_files: data/datasets-autism.json
-  split: train[:]
-  batch_size: 1                        # small batch due to model size
-  max_length: 2048
+  dataset_name: yahma/alpaca-cleaned   # or any instruction‑style dataset
+  # data_files: data/datasets-autism.json
+  split: train[:100]
+  batch_size: 1
+  max_length: 1024
   # split_ratio: 0.9
   num_workers: 4
   instruction_style: SFT_llama31
 
 training:
-  epochs: 5                            # common recommendation ≤3 for 8B :contentReference[oaicite:2]{index=2}
-  learning_rate: 5e-5                 # from HF TRL guide :contentReference[oaicite:3]{index=3}
+  epochs: 5
+  learning_rate: 5e-5
   weight_decay: 0.02
   gradient_accumulation_steps: 2
   save_steps: 500
@@ -55,9 +48,9 @@ training:
     min_lr: 1e-6
     max_lr: 5e-5
     warmup_steps: 200
-    restart_interval: 100  # Add cycle length
-    restart_mult: 1.0    # Add multiplier
+    restart_interval: 100
+    restart_mult: 1.0
 
 environment:
-  ENABLE_ONEDNN_LAYOUT_OPT: "1"
-  ONEDNN_DEFAULT_FPMATH_MODE: "BF16"
+  CCL_PROCESS_LAUNCHER: none
+  TORCH_LLM_ALLREDUCE: 1

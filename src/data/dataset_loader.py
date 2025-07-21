@@ -1,3 +1,4 @@
+import torch
 from datasets import load_dataset as hf_load_dataset
 from torch.utils.data import DataLoader, random_split, TensorDataset
 from transformers import AutoTokenizer
@@ -67,11 +68,11 @@ def preprocess_CLM_llama(example, tokenizer, max_length):
     }
 
 def preprocess_SFT_llama(example, tokenizer, max_length):
-    if "instruction" not in example or "output" not in example:
-        raise ValueError(f"Missing required fields in example: {example}")
-    instruction = example.get("instruction", "")
-    input_context = example.get("input", "")
-    assistant = example.get("output", "")
+    if "instruction" not in example or "input" not in example or "output" not in example:
+        raise ValueError(f"Missing required field in example: {example}")
+    instruction = example.get('instruction')
+    input_context = example.get('input', '')
+    assistant = example.get('output')
     sys_prompt = example.get("system", "") or "You are a helpful assistant."
     # Combine instruction and input if input is present
     if input_context:
@@ -81,36 +82,29 @@ def preprocess_SFT_llama(example, tokenizer, max_length):
 
     prompt = f"<s>[INST] <<SYS>>\n{sys_prompt}\n<</SYS>>\n\n{user_message} [/INST] "
     response = f"{assistant}</s>"
-    
-    # Tokenize separately
+
     prompt_enc = tokenizer(prompt, truncation=True, max_length=max_length, add_special_tokens=False)
     response_enc = tokenizer(response, truncation=True, max_length=max_length, add_special_tokens=False)
-    
-    # Combine and create labels
-    input_ids = prompt_enc["input_ids"] + response_enc["input_ids"]
+
+    # Truncate response if needed
+    available_length = max_length - len(prompt_enc["input_ids"])
+    response_ids = response_enc["input_ids"][:available_length]
+
+    input_ids = prompt_enc["input_ids"] + response_ids
+    labels = [-100] * len(prompt_enc["input_ids"]) + response_ids
     attention_mask = [1] * len(input_ids)
 
-    # Ensure the combined length does not exceed max_length
-    combined_length = len(prompt_enc["input_ids"]) + len(response_enc["input_ids"])
-    if combined_length > max_length:
-        # Adjust response length to fit within max_length
-        response_enc = tokenizer(
-            response,
-            truncation=True,
-            max_length=max_length - len(prompt_enc["input_ids"]),
-            add_special_tokens=False,
-        )
-    
-    labels = [-100] * len(prompt_enc["input_ids"]) + response_enc["input_ids"]
-    
-    # Pad labels to match max_length
-    pad_len = max_length - len(labels)
+    # Pad if needed
+    pad_len = max_length - len(input_ids)
     if pad_len > 0:
+        input_ids += [tokenizer.pad_token_id] * pad_len
         labels += [-100] * pad_len
+        attention_mask += [0] * pad_len
+
     return {
         "input_ids": input_ids,
         "attention_mask": attention_mask,
-        "labels": labels
+        "labels": labels,
     }
 
 def preprocess_SFT_llama31(example, tokenizer, max_length):
@@ -192,9 +186,11 @@ def load_dataset_config(data_config, model_config, custom_preprocess_fn = None):
             data_files=data_config['data_files']
         )["train"]
     global tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(model_config['tokenizer_id'], trust_remote_code=True, model_max_length=data_config['max_length'],use_fast=False)
-    if model_config.get('pad_token_as_eos', False):
-        tokenizer.pad_token = tokenizer.eos_token
+    tokenizer = AutoTokenizer.from_pretrained(model_config['tokenizer_id'], model_max_length=data_config['max_length'], padding_side="left", add_eos_token=False)
+    # Explicitly set pad_token if not already defined
+    if tokenizer.pad_token is None and model_config.get('pad_token_as_eos', False):
+        tokenizer.pad_token = tokenizer.eos_token  # Fallback to eos_token if needed
+        print(f"Warning: pad_token not set. Using eos_token ({tokenizer.eos_token}) as pad_token.")
     instruction_style = data_config.get('instruction_style', '')
     if instruction_style == 'CLM_gpt2':
         preprocess_fn = lambda ex: preprocess_CLM_gpt2(ex, tokenizer, data_config['max_length'])
@@ -216,7 +212,7 @@ def load_dataset_config(data_config, model_config, custom_preprocess_fn = None):
 
     # tokenized = dataset.map(lambda ex: debug_long_examples(preprocess_fn(ex)), batched=False)
     tokenized = dataset.map(preprocess_fn, batched=False, remove_columns=dataset.column_names)
-    # tokenized = tokenized.filter(lambda row: len(row['input_ids']) <= data_config['max_length'])
+    tokenized = tokenized.filter(lambda row: len(row['input_ids']) <= data_config['max_length'])
     tokenized.set_format(type="torch", columns=["input_ids", "attention_mask", "labels"])
     # Split (only if not using a split from hub)
     num_workers = data_config.get('num_workers', 0)

@@ -3,13 +3,13 @@
 model:
   model_id: meta-llama/Llama-2-7b-chat-hf
   tokenizer_id: meta-llama/Llama-2-7b-chat-hf
-  pad_token_as_eos: true
+  pad_token_as_eos: false
   from_pretrained_params:
-    load_in_low_bit: nf4
-    optimize_model: false
+    # load_in_low_bit: nf4
+    # optimize_model: false
     torch_dtype: bfloat16
     trust_remote_code: true
-    modules_to_not_convert: ["lm_head"]
+    # modules_to_not_convert: ["lm_head"]
     use_cache: false
   gradient_checkpointing: true
   lora:
@@ -30,6 +30,7 @@ model:
     training_mode: qlora
   ipex:
     enabled: true
+    optimize_model: false
   prepare_kbit_training: true
 
 data:
@@ -46,7 +47,7 @@ training:
   learning_rate: 1e-5
   weight_decay: 0.01
   gradient_accumulation_steps: 3
-  save_steps: 100
+  save_steps: 200
   output_dir: outputs/llama2_chat_hf_qlora_xpu
   seed: 42
   device: xpu
