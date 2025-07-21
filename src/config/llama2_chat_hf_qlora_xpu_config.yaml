@@ -3,7 +3,7 @@
 model:
   model_id: meta-llama/Llama-2-7b-chat-hf
   tokenizer_id: meta-llama/Llama-2-7b-chat-hf
-  pad_token_as_eos: false
+  pad_token_as_eos: true
   from_pretrained_params:
     # load_in_low_bit: nf4
     # optimize_model: false
