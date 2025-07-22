@@ -5,7 +5,6 @@ from transformers import AutoModelForCausalLM, BitsAndBytesConfig
 
 try:
     import intel_extension_for_pytorch as ipex
-    from intel_extension_for_pytorch.llm.functional.utils import ipex_update_causal_mask
     has_ipex = True
 except ImportError:
     has_ipex = False
@@ -57,5 +56,4 @@ def create_model_config(model_config, checkpoint_path):
 
     if model_config.get('ipex', {}).get('optimize_model', False) and has_ipex:
         model = ipex.optimize(model.eval(), dtype=torch.bfloat16)
-        ipex_update_causal_mask(model)
     return (model, device)
