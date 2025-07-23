@@ -51,8 +51,8 @@ To run training with LLaMA-2 on the Alpaca dataset examples:
 | gpt2_lora_finetune_config.yaml  | gpt2           | GPT-2                 |
 | llama2_hf_qlora_xpu_config.yaml | meta-llama/Llama-2-7b-hf   | Llama 2 (7B)          |
 | llamma2_chat_hf_qlora_xpu_config.yaml | meta-llama/Llama-2-7b-chat-hf | Llama 2 (7B Chat)     |
-| mistral-7B-v0.1_xpu_config.yaml  | mistralai/Mistral-7B-v0.1         | Mistral (7B)                |
-| llama3.18B_qlora_config.yaml | meta-llama/Llama-3.1-8B-Instruct | llama 3.1 | 
+| mistral-7B-v0.1_xpu_config.yaml  | mistralai/Mistral-7B-v0.1         | Mistral (7B)          |
+| llama3.18B_qlora_config.yaml | meta-llama/Llama-3.1-8B-Instruct | Llama 3.1 (8B Instruct) |
 
 3. Run the training for your model using the provided configuration:
 ### Start training:
