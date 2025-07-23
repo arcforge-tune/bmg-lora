@@ -6,7 +6,6 @@ model:
     load_in_low_bit: nf4
     optimize_model: false
     torch_dtype: bfloat16
-    trust_remote_code: true
     modules_to_not_convert: ["lm_head"]
     use_cache: false
   gradient_checkpointing: true
@@ -38,7 +37,7 @@ data:
   batch_size: 1
   max_length: 2048
   num_workers: 2
-  instruction_style: CLM_llama
+  instruction_style: SFT_mistral
 
 training:
   epochs: 5

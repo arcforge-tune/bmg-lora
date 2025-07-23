@@ -8,7 +8,6 @@ model:
     # load_in_low_bit: nf4
     # optimize_model: false
     torch_dtype: bfloat16
-    trust_remote_code: true
     # modules_to_not_convert: ["lm_head"]
     use_cache: false
   gradient_checkpointing: true

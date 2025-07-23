@@ -107,6 +107,46 @@ def preprocess_SFT_llama(example, tokenizer, max_length):
         "labels": labels,
     }
 
+def preprocess_SFT_mistral(example, tokenizer, max_length):
+    if "instruction" not in example or "input" not in example or "output" not in example:
+        raise ValueError(f"Missing required field in example: {example}")
+    instruction = example.get('instruction')
+    input_context = example.get('input', '')
+    assistant = example.get('output')
+    sys_prompt = example.get("system", "")
+    # Combine instruction and input if input is present
+    if input_context:
+        user_message = f"{instruction}\n{input_context}"
+    else:
+        user_message = instruction
+
+    prompt = f"<s>[INST] {sys_prompt}\n{ user_message } [/INST]"
+    response = f"{assistant}</s>"
+
+    prompt_enc = tokenizer(prompt, truncation=True, max_length=max_length, add_special_tokens=False)
+    response_enc = tokenizer(response, truncation=True, max_length=max_length, add_special_tokens=False)
+
+    # Truncate response if needed
+    available_length = max_length - len(prompt_enc["input_ids"])
+    response_ids = response_enc["input_ids"][:available_length]
+
+    input_ids = prompt_enc["input_ids"] + response_ids
+    labels = [-100] * len(prompt_enc["input_ids"]) + response_ids
+    attention_mask = [1] * len(input_ids)
+
+    # Pad if needed
+    pad_len = max_length - len(input_ids)
+    if pad_len > 0:
+        input_ids += [tokenizer.pad_token_id] * pad_len
+        labels += [-100] * pad_len
+        attention_mask += [0] * pad_len
+
+    return {
+        "input_ids": input_ids,
+        "attention_mask": attention_mask,
+        "labels": labels,
+    }
+
 def preprocess_SFT_llama31(example, tokenizer, max_length):
     if "instruction" not in example or "output" not in example:
         raise ValueError(f"Missing required fields in example: {example}")
@@ -200,6 +240,8 @@ def load_dataset_config(data_config, model_config, custom_preprocess_fn = None):
         preprocess_fn = lambda ex: preprocess_SFT_llama(ex, tokenizer, data_config['max_length'])
     elif instruction_style == 'SFT_llama31':
         preprocess_fn = lambda ex: preprocess_SFT_llama31(ex, tokenizer, data_config['max_length'])
+    elif instruction_style == 'SFT_mistral':
+        preprocess_fn = lambda ex: preprocess_SFT_mistral(ex, tokenizer, data_config['max_length'])
     elif custom_preprocess_fn is not None and callable(custom_preprocess_fn):
         preprocess_fn = custom_preprocess_fn
     else:

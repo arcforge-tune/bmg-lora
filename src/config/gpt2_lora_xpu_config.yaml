@@ -15,6 +15,7 @@ model:
   model_id: gpt2
   tokenizer_id: gpt2
   pad_token_as_eos: true
+  load_in_4bit: False
   lora:
     enabled: true
     r: 4

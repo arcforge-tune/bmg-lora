@@ -4,8 +4,7 @@ model:
   pad_token_as_eos: true
   from_pretrained_params:
     torch_dtype: bfloat16
-    trust_remote_code: true
-    use_cache: false
+    modules_to_not_convert: ["lm_head"]
   gradient_checkpointing: true
   lora:
     enabled: true
