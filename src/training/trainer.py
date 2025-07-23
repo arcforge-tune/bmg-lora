@@ -167,7 +167,7 @@ class Trainer:
             self.model.save_pretrained(output_dir)
             self.tokenizer.save_pretrained(output_dir)
             print(f"\n[XPU] Final model saved to {output_dir}")
-            print(f"\nYou can run this script to merge and export it:\nmerge_convert_quantize.bat --base_model {self.model_id} --lora_adapter_dir {self.configTrain['output_dir']}")
+            print(f"\n[XPU] You can run this script to merge and export it:\nmerge_convert_quantize.bat --base_model {self.model_id} --lora_adapter_dir {self.configTrain['output_dir']}")
 
     def validate(self, epoch, use_amp):
         self.model.eval()
