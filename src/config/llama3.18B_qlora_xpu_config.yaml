@@ -29,16 +29,16 @@ data:
   # data_files: data/datasets-autism.json
   split: train[:100]
   batch_size: 1
-  max_length: 1024
+  max_length: 1536
   # split_ratio: 0.9
-  num_workers: 3
+  num_workers: 1
   instruction_style: SFT_llama31
 
 training:
   epochs: 5
   learning_rate: 5e-5
   weight_decay: 0.02
-  gradient_accumulation_steps: 2
+  gradient_accumulation_steps: 4
   save_steps: 500
   output_dir: outputs/llama3.18B_qlora_xpu
   seed: 42
