@@ -49,7 +49,7 @@ class Trainer:
         self.total_steps = (self.epochs * self.batches_per_epoch) // self.grad_accum_steps
         self.model_id = config['model'].get('model_id')
 
-    def train(self, use_amp=False, save_checkpoint_fn=None, use_tqdm=False, resume_checkpoint=None):
+    def train(self, use_amp=False, save_checkpoint_fn=None, use_tqdm=False, resume_checkpoint=None,  skip_last_n_epochs=0):
         # Initialize training state
         start_epoch = 0
         global_step = 0
@@ -63,7 +63,9 @@ class Trainer:
                   f"batches_done={batches_done_in_epoch}/{self.batches_per_epoch}, "
                   f"total_steps={self.total_steps}")
 
-        for epoch in range(start_epoch, self.epochs):
+        effective_epochs = (self.epochs - 1) - skip_last_n_epochs  
+
+        for epoch in range(start_epoch, effective_epochs):
             self.model.train()
             total_loss = 0.0
             self.optimizer.zero_grad()
@@ -159,6 +161,9 @@ class Trainer:
             # Clear cache
             torch.xpu.empty_cache()
         
+        if skip_last_n_epochs > 0 and effective_epochs < self.epochs:
+            print(f"\n[XPU] Skipped last {skip_last_n_epochs} epoch(s), trained for {effective_epochs}/{self.epochs} epochs")
+            
         # Save final model
         if self.configTrain.get('save_model', True):
             print("\n[XPU] Saving final LoRA adapter...")

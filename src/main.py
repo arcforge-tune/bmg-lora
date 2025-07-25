@@ -11,7 +11,9 @@ def main():
     parser.add_argument('--config', type=str, required=False,
                        help='Read the configuration from the default folder',
                        default="src/config/llama3.18B_qlora_config.yaml")
-    parser.add_argument("--resume", help="Path to checkpoint directory", default= None)#"outputs/lora_llama3_1_8b_instruct_xpu\checkpoint-epoch0-step11")
+    parser.add_argument("--resume", help="Path to checkpoint directory", default=None)
+    parser.add_argument("--skip_last_n_epochs", type=int, default=0,
+                       help="Number of final epochs to skip (default: 0)")
     args = parser.parse_args()
     
     # Check if config file exists
@@ -38,7 +40,8 @@ def main():
     trainer = Trainer(model, device, train_data, val_data, config, tokenizer)
 
     # Start training
-    trainer.train(use_amp=True,use_tqdm=True, resume_checkpoint=args.resume)
+    trainer.train(use_amp=True, use_tqdm=True, resume_checkpoint=args.resume,
+                 skip_last_n_epochs=args.skip_last_n_epochs)
 
 if __name__ == "__main__":
     main()
