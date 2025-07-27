@@ -13,7 +13,12 @@ model:
     lora_dropout: 0.05
     target_modules:
       - q_proj
+      - k_proj
       - v_proj
+      - o_proj
+      - gate_proj
+      - up_proj
+      - down_proj
     bias: none
     task_type: CAUSAL_LM
     training_mode: qlora
@@ -46,7 +51,7 @@ training:
   scheduler:
     min_lr: 1e-6
     max_lr: 5e-5
-    warmup_steps: 200
+    warmup_steps: 50
     restart_interval: 100
     restart_mult: 1.0
 
