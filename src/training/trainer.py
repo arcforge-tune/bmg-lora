@@ -96,7 +96,7 @@ class Trainer:
                 
                 # Forward pass
                 if use_amp:
-                    with torch.xpu.amp.autocast(dtype=torch.bfloat16):
+                    with torch.amp.autocast('xpu', dtype=torch.bfloat16):
                         outputs = self.model(**batch)
                         loss = outputs.loss
                         scaled_loss = loss / self.grad_accum_steps

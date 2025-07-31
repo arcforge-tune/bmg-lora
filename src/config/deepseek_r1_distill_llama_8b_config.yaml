@@ -33,9 +33,9 @@ model:
 
 data:
   dataset_type: json
-  # dataset_name: yahma/alpaca-cleaned   # or any instruction‑style dataset
-  data_files: data/datasets-autism.json
-  split: train[:]
+  dataset_name: yahma/alpaca-cleaned   # or any instruction‑style dataset
+  # data_files: data/datasets-autism.json
+  split: train[:100]
   batch_size: 1
   max_length: 3072
   num_workers: 16
