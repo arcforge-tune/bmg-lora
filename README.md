@@ -31,13 +31,6 @@ conda activate fine-tune
 cd bmg-lora
 pip install -r requirements.txt
 ```
-
-3. Optional for fine-tune with meta-llama/Llama-3.1-8B-Instruct
-install these packages:
-```bash
-tokenizers=0.21.2
-transformers=4.53.1
-```
 ## 🛠️ Usage
 
 To run training with LLaMA-2 on the Alpaca dataset examples:
@@ -53,6 +46,7 @@ To run training with LLaMA-2 on the Alpaca dataset examples:
 | llamma2_chat_hf_qlora_xpu_config.yaml | meta-llama/Llama-2-7b-chat-hf | Llama 2 (7B Chat)     |
 | mistral-7B-v0.1_xpu_config.yaml  | mistralai/Mistral-7B-v0.1         | Mistral (7B)                |
 | llama3.18B_qlora_config.yaml | meta-llama/Llama-3.1-8B-Instruct | llama 3.1 | 
+| deepseek_r1_distill_llama_8b_config.yaml | deepseek-ai/DeepSeek-R1-Distill-Llama-8B | DeepSeek R1 Distill Llama 8B |
 
 3. Run the training for your model using the provided configuration:
 ### Start training:
