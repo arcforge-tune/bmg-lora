@@ -18,8 +18,7 @@ class Trainer:
             configTrain = config['training']
             configLora = config['model']['lora']
         else:
-            configTrain = config
-            configLora = {}
+            raise ValueError(f"Missing training config")
         self.model = model
         self.train_loader = train_loader
         self.val_loader = val_loader
@@ -48,8 +47,9 @@ class Trainer:
         self.grad_accum_steps = self.configTrain.get('gradient_accumulation_steps', 1)
         self.epochs = configTrain['epochs']
         self.total_steps = (self.epochs * self.batches_per_epoch) // self.grad_accum_steps
+        self.model_id = config['model'].get('model_id')
 
-    def train(self, use_amp=False, save_checkpoint_fn=None, use_tqdm=False, resume_checkpoint=None):
+    def train(self, use_amp=False, save_checkpoint_fn=None, use_tqdm=False, resume_checkpoint=None,  skip_last_n_epochs=0):
         # Initialize training state
         start_epoch = 0
         global_step = 0
@@ -59,11 +59,13 @@ class Trainer:
         if resume_checkpoint:
             start_epoch, global_step = self.load_checkpoint(resume_checkpoint)
             batches_done_in_epoch = (global_step * self.grad_accum_steps) % self.batches_per_epoch
-            print(f"\nResuming: epoch={start_epoch}, global_step={global_step}, "
+            print(f"\nResuming: epoch={start_epoch+1}, global_step={global_step}, "
                   f"batches_done={batches_done_in_epoch}/{self.batches_per_epoch}, "
                   f"total_steps={self.total_steps}")
 
-        for epoch in range(start_epoch, self.epochs):
+        effective_epochs = self.epochs - skip_last_n_epochs  
+
+        for epoch in range(start_epoch, effective_epochs):
             self.model.train()
             total_loss = 0.0
             self.optimizer.zero_grad()
@@ -71,18 +73,16 @@ class Trainer:
             # Prepare data iterator
             if epoch == start_epoch and resume_checkpoint:
                 data_iterator = self._fast_forward_data_loader(global_step)
-                remaining_batches = self.batches_per_epoch - batches_done_in_epoch
             else:
                 data_iterator = iter(self.train_loader)
                 batches_done_in_epoch = 0
-                remaining_batches = self.batches_per_epoch
 
             # Setup progress bar
             if use_tqdm:
                 progress = tqdm(
                     data_iterator,
                     desc=f"Epoch {epoch+1}/{self.epochs}",
-                    total=remaining_batches,
+                    total=self.batches_per_epoch,
                     initial=batches_done_in_epoch
                 )
             else:
@@ -122,7 +122,9 @@ class Trainer:
                     else:
                         current_lr = self.optimizer.param_groups[0]['lr']
                     
-                    self.optimizer.zero_grad()
+                    # Ensure gradients are not unnecessarily retained
+                    with torch.no_grad():
+                        self.optimizer.zero_grad()
                     global_step += 1
                     
                     # Save checkpoint
@@ -159,6 +161,9 @@ class Trainer:
             # Clear cache
             torch.xpu.empty_cache()
         
+        if skip_last_n_epochs > 0 and effective_epochs < self.epochs:
+            print(f"\n[XPU] Skipped last {skip_last_n_epochs} epoch(s), trained for {effective_epochs}/{self.epochs} epochs")
+            
         # Save final model
         if self.configTrain.get('save_model', True):
             print("\n[XPU] Saving final LoRA adapter...")
@@ -167,6 +172,7 @@ class Trainer:
             self.model.save_pretrained(output_dir)
             self.tokenizer.save_pretrained(output_dir)
             print(f"\n[XPU] Final model saved to {output_dir}")
+            print(f"\n[XPU] You can run this script to merge and export it:\nmerge_convert_quantize.bat --base_model {self.model_id} --lora_adapter_dir {self.configTrain['output_dir']}")
 
     def validate(self, epoch, use_amp):
         self.model.eval()
@@ -218,6 +224,7 @@ class Trainer:
             torch.save(get_peft_model_state_dict(self.model), adapter_path)
         
         print(f"Checkpoint saved: Epoch {epoch+1}, Step {global_step} -> {checkpoint_dir}")
+        torch.xpu.empty_cache()
         return checkpoint_dir
 
     def load_checkpoint(self, checkpoint_path):

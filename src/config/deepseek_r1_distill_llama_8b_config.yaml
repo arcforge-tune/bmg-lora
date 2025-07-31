@@ -37,8 +37,8 @@ data:
   data_files: data/datasets-autism.json
   split: train[:]
   batch_size: 1
-  max_length: 2048
-  num_workers: 4
+  max_length: 3072
+  num_workers: 16
   instruction_style: DeepSeek
 
 training:
@@ -46,7 +46,7 @@ training:
   learning_rate: 5e-5
   weight_decay: 0.02
   gradient_accumulation_steps: 4
-  save_steps: 500
+  save_steps: 250
   output_dir: outputs/deepseek_r1_distill_llama_8b
   seed: 42
   device: xpu
