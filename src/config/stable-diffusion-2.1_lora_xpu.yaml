@@ -1,0 +1,30 @@
+training:
+  folder: "./data/your_image_folder/joandrys"
+  trigger_token: "sks"
+  epochs: 100
+  learning_rate: 3e-4
+  image_size: 768  # SD 2.1 supports 768x768 resolution
+
+scheduler:
+  min_lr: 1e-6
+  max_lr: 3e-4
+  warmup_steps: 50
+  restart_interval: 100
+  restart_mult: 1.0
+
+model:
+  pretrained_model_name: "stabilityai/stable-diffusion-2-1-base"  # Updated for SD 2.1
+  variant: "fp16"
+  use_safetensors: true
+  safety_checker: null
+  load_in_low_bit: true
+
+lora:
+  task_type: "TEXT_TO_IMAGE"
+  inference_mode: false
+  r: 4
+  lora_alpha: 8
+  target_modules: ["to_q", "to_k", "to_v", "to_out.0"]  # Adjust if needed for SD 2.1 architecture
+
+early_stopping:
+  patience: 10
