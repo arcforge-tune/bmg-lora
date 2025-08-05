@@ -1,5 +1,6 @@
 training:
   folder: "./data/your_image_folder"
+  output_folder: "./outputs/lora_stable-diffusion-1-5-base_xpu"  # Add this line
   trigger_token: "a stunning portrait of scarjo_style"
   epochs: 100
   learning_rate: 4e-4

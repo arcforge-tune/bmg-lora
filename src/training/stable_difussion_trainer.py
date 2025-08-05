@@ -106,7 +106,7 @@ def train(config_path):
     logger.info("Loading tokenizer...")
     tokenizer = CLIPTokenizer.from_pretrained("openai/clip-vit-base-patch32")
 
-    logger.info("Loading Stable Diffusion v1.5 base model...")
+    logger.info(f"Loading Stable Diffusion {model_config['pretrained_model_name']}")
     quantization_config = None
     if model_config.get('load_in_low_bit', False):
         quantization_config = PipelineQuantizationConfig(
@@ -218,10 +218,11 @@ def train(config_path):
         torch.xpu.empty_cache()
 
     logger.info("Saving LoRA adapters...")
-    unet.save_pretrained("lora_sd_small_xpu_2.1")
-    logger.info("Saved adapters to ./lora_sd_small_xpu")
+    output_folder = config.training.get("output_folder")
+    unet.save_pretrained(output_folder)
+    logger.info(f"Saved adapters to ./{output_folder}")
 
 if __name__ == "__main__":
     logger.info("Script start")
-    train(config_path=".\src\config\stable-diffusion-2.1_lora_xpu.yaml")
+    train(config_path=".\src\config\sdxl-turbo_lora_xpu.yaml")
     logger.info("Script done")

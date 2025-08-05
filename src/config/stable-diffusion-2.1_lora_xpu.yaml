@@ -1,5 +1,6 @@
 training:
   folder: "./data/your_image_folder/joandrys"
+  output_folder: "./outputs/lora_stable-diffusion-2-1-base_xpu"  # Add this line
   trigger_token: "sks"
   epochs: 100
   learning_rate: 3e-4
